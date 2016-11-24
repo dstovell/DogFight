@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using Pathfinding;
 
 namespace DogFight
 {
@@ -27,7 +26,7 @@ public class ShipLeader : MonoBehaviour
 	
 	}
 
-	private SWS.PathManager GeneratePathManager(string name, List<Transform> points)
+	private SWS.PathManager GeneratePathManager(string name, List<Vector3> points)
 	{
 		GameObject obj = new GameObject();
 		obj.name = name + "Path";
@@ -37,14 +36,17 @@ public class ShipLeader : MonoBehaviour
 
 		for (int i=0; i<points.Count; i++)
 		{
-			points[i].SetParent(obj.transform);
-			path.waypoints[i] = points[i];
+			GameObject nodeObj = new GameObject("node" + i);
+			nodeObj.transform.position = points[i];
+
+			nodeObj.transform.SetParent(obj.transform);
+			path.waypoints[i] = nodeObj.transform;
 		}
 
 		return path;
 	}
 
-	public void MovePath(List<Transform> points)
+	public void MovePath(List<Vector3> points)
 	{
 		this.currentPath = this.GeneratePathManager("Ship", points);
 	}
