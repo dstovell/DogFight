@@ -35,6 +35,11 @@ public class Arena : MonoBehaviour {
 
 	private GameObject AddNavPoint(Vector3 pos, Transform parent)
 	{
+		if (StaticObstacle.AnyContains(pos))
+		{
+			return null;
+		}
+
 		GameObject obj = new GameObject("NavPoint");
 		obj.tag = "NavPoint";
 		obj.transform.position = pos;
