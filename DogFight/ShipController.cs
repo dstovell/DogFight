@@ -32,8 +32,9 @@ public class ShipController : MessengerListener
 
 	private float currentSpeed = 0f;
 
-	public Quaternion StartRotate = Quaternion.identity;
-	public Quaternion GoalRotate = Quaternion.identity;
+	public float StartRotate = 0f;
+	public float GoalRotate = 0f;
+	public float CurrentRotate = 0f;
 
 	public bool RotateStarted = false;
 	private float NextIdleRotateDir = 1;
@@ -49,7 +50,8 @@ public class ShipController : MessengerListener
 
 		if (this.Rotator != null)
 		{
-			this.StartRotate = this.Rotator.transform.rotation;
+			this.StartRotate = this.Rotator.transform.localRotation.z;
+			this.CurrentRotate = this.StartRotate;
 		}
 
 		this.MoveTo( Arena.Instance.EndB.transform.position );
@@ -111,6 +113,13 @@ public class ShipController : MessengerListener
 		}
 	}
 
+	private bool RotateTowards(float targetAngle, float speed)
+	{
+		this.CurrentRotate = Mathf.MoveTowards( this.CurrentRotate, targetAngle, speed*Time.deltaTime);
+		this.Rotator.transform.localRotation = Quaternion.Euler(0f, 0f, this.CurrentRotate);
+		return (targetAngle == this.CurrentRotate);
+	}
+
 	private void UpdateRotator()
 	{
 		if (this.Rotator == null)
@@ -122,22 +131,22 @@ public class ShipController : MessengerListener
 		{
 			if (this.RotateStarted)
 			{
-				this.Rotator.transform.rotation = Quaternion.RotateTowards(this.Rotator.transform.rotation, this.GoalRotate, this.IdleRotateSpeed*Time.deltaTime);
-				if (this.Rotator.transform.rotation == this.GoalRotate) 
+				bool done = this.RotateTowards(this.GoalRotate, this.IdleRotateSpeed);
+				if (done) 
 				{
-					this.GoalRotate = Quaternion.identity;
+					this.GoalRotate = 0f;
 					this.RotateStarted = false;
 				}
 			}
 			else 
 			{
-				float minRotate = 0.2f;
-				this.Rotator.transform.rotation = Quaternion.RotateTowards(this.Rotator.transform.rotation, this.StartRotate, this.IdleRotateSpeed*Time.deltaTime);
-				if (this.Rotator.transform.rotation == this.StartRotate)
+				bool done = this.RotateTowards(this.StartRotate, this.IdleRotateSpeed);
+				if (done) 
 				{
+					float minRotate = 0.2f;
 					float randomT = (this.NextIdleRotateDir > 0) ? Random.Range(minRotate, 1f) : Random.Range(-1f, -1*minRotate);
 					float randomAngle = this.MaxIdleRotate*randomT;
-					this.GoalRotate = Quaternion.AngleAxis(randomAngle, this.Rotator.transform.forward) * this.StartRotate;
+					this.GoalRotate = randomAngle + this.StartRotate;
 					this.RotateStarted = true;
 
 					this.NextIdleRotateDir *= -1f;
@@ -148,10 +157,10 @@ public class ShipController : MessengerListener
 		{
 			if (this.RotateStarted)
 			{
-				this.Rotator.transform.rotation = Quaternion.RotateTowards(this.Rotator.transform.rotation, this.GoalRotate, this.RotateSpeed*Time.deltaTime);
-				if (this.Rotator.transform.rotation == this.GoalRotate) 
+				bool done = this.RotateTowards(this.GoalRotate, this.RotateSpeed);
+				if (done) 
 				{
-					this.GoalRotate = Quaternion.identity;
+					this.GoalRotate = 0f;
 					this.RotateStarted = false;
 				}
 			}
