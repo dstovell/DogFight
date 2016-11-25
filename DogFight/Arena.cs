@@ -87,7 +87,7 @@ public class Arena : MonoBehaviour {
 
 		this.EndA = this.AddNavPoint(new Vector3(0.0f, 0.0f, -1.0f*this.ArenaCapLength), this.transform);
 		this.EndA.name = "EndA";
-		this.EndB = this.AddNavPoint(new Vector3(0.0f, 0.0f, this.ArenaLength + this.ArenaCapLength), this.transform);
+		this.EndB = this.AddNavPoint(new Vector3(0.0f, 0.0f, this.ArenaLength - segmentLength + this.ArenaCapLength), this.transform);
 		this.EndB.name = "EndB";
 
 		AstarPath.active.astarData.pointGraph.limits = new Vector3(layerMultiple, layerMultiple, 1.5f*segmentLength);
