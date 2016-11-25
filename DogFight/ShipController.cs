@@ -59,9 +59,9 @@ public class ShipController : MessengerListener
 
 	void Update() 
 	{
-		if (!this.IsMoving())
+		if (this.Leader.transform.position == this.transform.position)
 		{
-			this.MoveTo( Arena.Instance.EndA.transform.position );
+			return;
 		}
 
 		Vector3 desiredDirection = (this.Leader.transform.position - this.transform.position).normalized;
