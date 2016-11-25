@@ -35,6 +35,9 @@ public class ShipController : MessengerListener
 	public Quaternion StartRotate = Quaternion.identity;
 	public Quaternion GoalRotate = Quaternion.identity;
 
+	public bool RotateStarted = false;
+	private float NextIdleRotateDir = 1;
+
 	// Use this for initialization
 	void Start() 
 	{
@@ -42,18 +45,35 @@ public class ShipController : MessengerListener
 		this.rb = this.gameObject.GetComponent<Rigidbody>();
 
 		this.Leader.gameObject.transform.SetParent(null);
+		this.Leader.SetSpeed(this.MoveSpeed);
 
 		if (this.Rotator != null)
 		{
 			this.StartRotate = this.Rotator.transform.rotation;
 		}
+
+		this.MoveTo( Arena.Instance.EndB.transform.position );
 	}
 
 	void Update() 
 	{
+		if (!this.IsMoving())
+		{
+			this.MoveTo( Arena.Instance.EndA.transform.position );
+		}
+
 		Vector3 desiredDirection = (this.Leader.transform.position - this.transform.position).normalized;
 		Quaternion desiredRotation = Quaternion.LookRotation(desiredDirection);
 		this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, desiredRotation, this.RotateSpeed*Time.deltaTime);
+		float turnAngleRemaining = Quaternion.Angle(this.transform.rotation, desiredRotation);
+		if (turnAngleRemaining < 0.1f)
+		{
+			this.SetRotateMode(RotateMode.Idle);
+		}
+		else
+		{
+			this.SetRotateMode(RotateMode.Turn);
+		}
 
 		float distanceToLeader = Vector3.Distance(this.transform.position, this.Leader.transform.position);
 		this.currentSpeed = this.MoveSpeed * Mathf.Min(distanceToLeader/this.DesiredLeaderDist, 2.0f);
@@ -67,6 +87,30 @@ public class ShipController : MessengerListener
 	{
 	}
 
+	private void SetRotateMode(RotateMode m)
+	{
+		if (this.rotateMode == m)
+		{
+			return;
+		}
+
+		this.rotateMode = m;
+		this.RotateStarted = true;
+
+		if (this.rotateMode == RotateMode.Idle)
+		{
+			this.GoalRotate = this.StartRotate;
+		}
+		else if (this.rotateMode == RotateMode.Turn)
+		{
+			this.GoalRotate = this.StartRotate;
+		}
+		else if (this.rotateMode == RotateMode.SpiralTurn)
+		{
+			this.GoalRotate = this.StartRotate;
+		}
+	}
+
 	private void UpdateRotator()
 	{
 		if (this.Rotator == null)
@@ -76,29 +120,41 @@ public class ShipController : MessengerListener
 
 		if (this.rotateMode == RotateMode.Idle)
 		{
-			if (this.GoalRotate != Quaternion.identity)
+			if (this.RotateStarted)
 			{
 				this.Rotator.transform.rotation = Quaternion.RotateTowards(this.Rotator.transform.rotation, this.GoalRotate, this.IdleRotateSpeed*Time.deltaTime);
 				if (this.Rotator.transform.rotation == this.GoalRotate) 
 				{
 					this.GoalRotate = Quaternion.identity;
+					this.RotateStarted = false;
 				}
 			}
 			else 
 			{
-				float minRotate = 0.2f*this.MaxIdleRotate;
+				float minRotate = 0.2f;
 				this.Rotator.transform.rotation = Quaternion.RotateTowards(this.Rotator.transform.rotation, this.StartRotate, this.IdleRotateSpeed*Time.deltaTime);
 				if (this.Rotator.transform.rotation == this.StartRotate)
 				{
-					float randomT = Random.Range(-1f, 1f);
-					randomT = (randomT > 0.0f) ? Mathf.Max(randomT, minRotate) :  Mathf.Min(randomT, -1*minRotate);
+					float randomT = (this.NextIdleRotateDir > 0) ? Random.Range(minRotate, 1f) : Random.Range(-1f, -1*minRotate);
 					float randomAngle = this.MaxIdleRotate*randomT;
 					this.GoalRotate = Quaternion.AngleAxis(randomAngle, this.Rotator.transform.forward) * this.StartRotate;
+					this.RotateStarted = true;
+
+					this.NextIdleRotateDir *= -1f;
 				}
 			}
 		}
 		else if (this.rotateMode == RotateMode.Turn)
 		{
+			if (this.RotateStarted)
+			{
+				this.Rotator.transform.rotation = Quaternion.RotateTowards(this.Rotator.transform.rotation, this.GoalRotate, this.RotateSpeed*Time.deltaTime);
+				if (this.Rotator.transform.rotation == this.GoalRotate) 
+				{
+					this.GoalRotate = Quaternion.identity;
+					this.RotateStarted = false;
+				}
+			}
 		}
 		else if (this.rotateMode == RotateMode.SpiralTurn)
 		{
@@ -120,6 +176,11 @@ public class ShipController : MessengerListener
 		return this.Leader.IsMoving();
 	}
 
+	public void MoveTo(Vector3 to)
+	{
+		this.Seeker.StartPath(this.Leader.transform.position, to, OnMovePathComplete);
+	}
+
 	public void MovePath(Vector3 from, Vector3 to)
 	{
 		this.Seeker.StartPath(from, to, OnMovePathComplete);
@@ -133,7 +194,7 @@ public class ShipController : MessengerListener
 
 	public void MovePath(List<Vector3> points)
 	{
-		this.Leader.MovePath(points);
+		this.Leader.MovePath(points, true);
 	}
 
 	public void Stop()

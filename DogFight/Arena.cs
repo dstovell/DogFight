@@ -8,8 +8,15 @@ namespace DogFight
 
 public class Arena : MonoBehaviour {
 
+	static public Arena Instance;
+
+	void Awake()
+	{
+		Arena.Instance = this;
+	}
+
 	// Use this for initialization
-	void Start () 
+	void Start() 
 	{
 		GenerateArena();
 	}

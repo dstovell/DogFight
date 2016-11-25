@@ -23,7 +23,7 @@ public class ShipLeader : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
-	
+		//this.mover.animEaseType
 	}
 
 	private SWS.PathManager GeneratePathManager(string name, List<Vector3> points)
@@ -46,9 +46,17 @@ public class ShipLeader : MonoBehaviour
 		return path;
 	}
 
-	public void MovePath(List<Vector3> points)
+	public void SetSpeed(float speed)
+	{
+		this.mover.speed = speed;
+	}
+
+	public void MovePath(List<Vector3> points, bool loop = false)
 	{
 		this.currentPath = this.GeneratePathManager("Ship", points);
+		this.mover.moveToPath = true;
+		this.mover.loopType = loop ? SWS.splineMove.LoopType.pingPong : SWS.splineMove.LoopType.none;
+		this.mover.SetPath(this.currentPath);
 	}
 
 	public bool IsMoving()
