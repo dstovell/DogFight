@@ -27,16 +27,19 @@ public class Arena : MonoBehaviour {
 	
 	}
 
-	public float ArenaRadius = 50.0f;
-	public float ArenaLength = 100.0f;
-	public float ArenaCapLength = 20.0f;
+	public float ArenaHeight = 100f;
+	public float ArenaWidth = 100f;
+	public float ArenaLength = 500f;
+	public float ArenaCapLength = 20f;
 
-	public int ArenaLayers = 2;
-	public int ArenaArcSegments = 6;
-	public int ArenaSegments = 50;
+	public float ArenaSegmentSpacing = 20f;
+	public float ArenaSegmentLength = 40f;
 
 	public GameObject EndA;
 	public GameObject EndB;
+
+	public float AsteroidSpawnCount = 20;
+	public GameObject [] Asteroids;
 
 	private GameObject NavPoints;
 
@@ -54,44 +57,64 @@ public class Arena : MonoBehaviour {
 		return obj;
 	}
 
-	private void GenerateSegment(Vector3 centerPos, float radius)
+	private void GenerateSegment(Vector3 centerPos, List<Vector3> navPointPositions)
 	{
-		float arcSize = (2*Mathf.PI)/this.ArenaArcSegments;
-		for (int i=0; i<this.ArenaArcSegments; i++)
+		for (float i=0; i<this.ArenaWidth; i+=this.ArenaSegmentSpacing)
 		{
-			float angle = (float)i * arcSize;
-			float x = radius * Mathf.Cos(angle);
-			float y = radius * Mathf.Sin(angle);
-			Vector3 pos = centerPos + new Vector3(x, y);
-			this.AddNavPoint(pos, this.NavPoints.transform);
+			for (float j=0; j<this.ArenaHeight; j+=this.ArenaSegmentSpacing)
+			{
+				Vector3 pos = centerPos + new Vector3(i, j, 0f);
+				navPointPositions.Add(pos);
+			}
+		}
+	}
+
+
+	private void SpawnRandomAsteroid(List<Vector3> possiblePositions)
+	{
+		if ((possiblePositions.Count == 0) || (this.Asteroids.Length == 0))
+		{
+			return;
 		}
 
-		this.AddNavPoint(centerPos, this.NavPoints.transform);
+		int randomPosIndex = Random.Range(0, possiblePositions.Count-1);
+		int randomAsteroid = Random.Range(0, this.Asteroids.Length-1);
+		GameObject.Instantiate(this.Asteroids[randomAsteroid], possiblePositions[randomPosIndex], Quaternion.identity);
 	}
 
 	public void GenerateArena()
 	{
+		List<Vector3> navPointPositions = new List<Vector3>();
+
+		float centerX = -1f * this.ArenaWidth/2f;
+		float centerY = -1f * this.ArenaHeight/2f;
 		this.NavPoints = new GameObject("NavPoints");
 		this.NavPoints.transform.SetParent(this.transform);
-		float segmentLength = this.ArenaLength / (float)this.ArenaSegments;
-		float layerMultiple = this.ArenaRadius / (float)this.ArenaLayers;
-		for (int i=0; i<this.ArenaLayers; i++)
+		for (float i=0; i<this.ArenaLength; i+=this.ArenaSegmentLength)
 		{
-			float radius = this.ArenaRadius - (float)i * layerMultiple;
-			for (int j=0; j<this.ArenaSegments; j++)
-			{
-				Vector3 pos = new Vector3(0.0f, 0.0f, (float)j * segmentLength);
-				this.GenerateSegment(pos, radius);
-			}
+			Vector3 pos = new Vector3(centerX, centerY, i);
+			this.GenerateSegment(pos, navPointPositions);
 		}
 
-		this.EndA = this.AddNavPoint(new Vector3(0.0f, 0.0f, -1.0f*this.ArenaCapLength), this.transform);
+		this.EndA = this.AddNavPoint(new Vector3(0f, 0f, -1.0f*this.ArenaCapLength), this.transform);
 		this.EndA.name = "EndA";
-		this.EndB = this.AddNavPoint(new Vector3(0.0f, 0.0f, this.ArenaLength - segmentLength + this.ArenaCapLength), this.transform);
+		this.EndB = this.AddNavPoint(new Vector3(0f, 0f, this.ArenaLength - this.ArenaSegmentLength + this.ArenaCapLength), this.transform);
 		this.EndB.name = "EndB";
 
-		AstarPath.active.astarData.pointGraph.limits = new Vector3(layerMultiple, layerMultiple, 1.5f*segmentLength);
-		AstarPath.active.astarData.pointGraph.maxDistance = 1.5f*segmentLength;
+		for (int a=0; a<this.AsteroidSpawnCount; a++)
+		{
+			this.SpawnRandomAsteroid(navPointPositions);
+		}
+
+		for (int n=0; n<navPointPositions.Count; n++)
+		{
+			this.AddNavPoint(navPointPositions[n], this.NavPoints.transform);
+		}
+
+		float xyMaxDist = 1.5f*this.ArenaSegmentSpacing;
+		float zMaxDist = 1.5f*this.ArenaSegmentLength;
+		AstarPath.active.astarData.pointGraph.limits = new Vector3(xyMaxDist, xyMaxDist, zMaxDist);
+		AstarPath.active.astarData.pointGraph.maxDistance = zMaxDist;
 		AstarPath.active.Scan();
 
 		AstarPath.RegisterSafeUpdate (() => {
