@@ -70,7 +70,7 @@ public class Arena : MonoBehaviour {
 	}
 
 
-	private void SpawnRandomAsteroid(List<Vector3> possiblePositions)
+	private void SpawnRandomAsteroid(List<Vector3> possiblePositions, GameObject parent = null)
 	{
 		if ((possiblePositions.Count == 0) || (this.Asteroids.Length == 0))
 		{
@@ -78,8 +78,17 @@ public class Arena : MonoBehaviour {
 		}
 
 		int randomPosIndex = Random.Range(0, possiblePositions.Count-1);
-		int randomAsteroid = Random.Range(0, this.Asteroids.Length-1);
-		GameObject.Instantiate(this.Asteroids[randomAsteroid], possiblePositions[randomPosIndex], Quaternion.identity);
+		int randomAsteroid = Random.Range(0, this.Asteroids.Length);
+
+		Quaternion randomRotation = Quaternion.Euler(Random.Range(0.0f, 360.0f), Random.Range(0.0f, 360.0f), Random.Range(0.0f, 360.0f));
+		float randomScale = Random.Range(0.3f, 1.0f);
+		//Squish upper size 1-(x-1)^2
+		GameObject asteroid = GameObject.Instantiate(this.Asteroids[randomAsteroid], possiblePositions[randomPosIndex], randomRotation) as GameObject;
+		asteroid.transform.localScale = new Vector3(randomScale, randomScale, randomScale);
+		if (parent != null)
+		{
+			asteroid.transform.SetParent(parent.transform);	
+		}
 	}
 
 	public void GenerateArena()
@@ -101,9 +110,11 @@ public class Arena : MonoBehaviour {
 		this.EndB = this.AddNavPoint(new Vector3(0f, 0f, this.ArenaLength - this.ArenaSegmentLength + this.ArenaCapLength), this.transform);
 		this.EndB.name = "EndB";
 
+		GameObject asteroidContainer = new GameObject("Asteroids");
+		asteroidContainer.transform.SetParent(this.transform);
 		for (int a=0; a<this.AsteroidSpawnCount; a++)
 		{
-			this.SpawnRandomAsteroid(navPointPositions);
+			this.SpawnRandomAsteroid(navPointPositions, asteroidContainer);
 		}
 
 		for (int n=0; n<navPointPositions.Count; n++)
