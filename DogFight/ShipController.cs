@@ -9,6 +9,13 @@ namespace DogFight
 
 public class ShipController : MessengerListener
 {
+	public enum PilotType
+	{
+		AI,
+		Human
+	}
+	public PilotType Pilot = PilotType.AI;
+
 	public enum RotateMode
 	{
 		Idle,
@@ -27,6 +34,10 @@ public class ShipController : MessengerListener
 	public ShipLeader Leader;
 	public Seeker Seeker;
 	public GameObject Rotator;
+
+	public ShipWeapon PrimaryWeapon;
+
+	public ShipController [] HostileShips;
 
 	private Rigidbody rb;
 
@@ -54,7 +65,19 @@ public class ShipController : MessengerListener
 			this.CurrentRotate = this.StartRotate;
 		}
 
-		this.MoveTo( Arena.Instance.EndB.transform.position );
+		if (this.Pilot == PilotType.Human)
+		{
+			this.MoveTo( Arena.Instance.EndB.transform.position );
+		}
+		else if (this.Pilot == PilotType.AI)
+		{
+			this.MoveTo( Arena.Instance.EndA.transform.position );
+		}
+
+		if (this.PrimaryWeapon != null)
+		{
+			this.PrimaryWeapon.LoadWeapon();
+		}
 	}
 
 	void Update() 
@@ -83,6 +106,7 @@ public class ShipController : MessengerListener
 
 		UpdateThrusters();
 		UpdateRotator();
+		UpdateWeapons();
 	}
 
 	private void UpdateThrusters()
@@ -168,6 +192,69 @@ public class ShipController : MessengerListener
 		else if (this.rotateMode == RotateMode.SpiralTurn)
 		{
 		}
+	}
+
+	private void UpdateWeapons()
+	{
+		if (this.HostileShips == null)
+		{
+			return;
+		}
+
+		for (int i=0; i<this.HostileShips.Length; i++)
+		{
+			ShipController hostile = this.HostileShips[i];
+			bool isFiring = this.IsFiring(this.PrimaryWeapon);
+			bool inFireArc = this.IsInFireArc(this.PrimaryWeapon, hostile.gameObject);
+			if (!isFiring && inFireArc)
+			{
+				this.FireAt(this.PrimaryWeapon, hostile.gameObject);
+			}
+			else if (isFiring && !inFireArc)
+			{
+				this.StopFiring(this.PrimaryWeapon);
+			}
+		}
+	}
+
+	public bool IsInFireArc(ShipWeapon weapon, GameObject target)
+	{
+		if (weapon == null)
+		{
+			return false;
+		}
+
+		return weapon.IsInFireArc(target, this.transform);
+	}
+
+	public void FireAt(ShipWeapon weapon, GameObject target)
+	{
+		if (weapon == null)
+		{
+			return;
+		}
+
+		weapon.FireAt(target);
+	}
+
+	public bool IsFiring(ShipWeapon weapon)
+	{
+		if (weapon == null)
+		{
+			return false;
+		}
+
+		return weapon.IsFiring();
+	}
+
+	public void StopFiring(ShipWeapon weapon)
+	{
+		if (weapon == null)
+		{
+			return;
+		}
+
+		weapon.StopFiring();
 	}
 
 	public bool IsFacing(Vector3 dir)

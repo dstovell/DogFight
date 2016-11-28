@@ -13,18 +13,15 @@ public class Arena : MonoBehaviour {
 	void Awake()
 	{
 		Arena.Instance = this;
-	}
-
-	// Use this for initialization
-	void Start() 
-	{
 		GenerateArena();
 	}
-	
-	// Update is called once per frame
-	void Update () 
+
+	void Start() 
 	{
-	
+	}
+
+	void Update() 
+	{
 	}
 
 	public float ArenaHeight = 100f;
