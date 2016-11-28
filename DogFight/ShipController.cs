@@ -35,6 +35,8 @@ public class ShipController : MessengerListener
 	public Seeker Seeker;
 	public GameObject Rotator;
 
+	public SpriteObjectTracker Reticle;
+
 	public ShipWeapon PrimaryWeapon;
 
 	public ShipController [] HostileShips;
@@ -74,9 +76,21 @@ public class ShipController : MessengerListener
 			this.MoveTo( Arena.Instance.EndA.transform.position );
 		}
 
-		if (this.PrimaryWeapon != null)
+		this.LoadWeapon(this.PrimaryWeapon);
+	}
+
+	public void LoadWeapon(ShipWeapon weapon)
+	{
+		if (weapon == null)
 		{
-			this.PrimaryWeapon.LoadWeapon();
+			return;
+		}
+
+		weapon.LoadWeapon();
+
+		if (this.Reticle != null)
+		{
+			this.Reticle.SetScale(weapon.GetReticleSize());
 		}
 	}
 
@@ -255,6 +269,11 @@ public class ShipController : MessengerListener
 		}
 
 		weapon.StopFiring();
+	}
+
+	public Vector3 GetReticleSize()
+	{
+		return this.PrimaryWeapon.GetReticleSize();
 	}
 
 	public bool IsFacing(Vector3 dir)

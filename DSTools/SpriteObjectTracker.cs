@@ -22,6 +22,26 @@ public class SpriteObjectTracker : MonoBehaviour {
 		UpdatePosition();
 	}
 
+	public void SetScale(float scale)
+	{
+		if (image == null)
+		{
+			return;
+		}
+
+		image.rectTransform.localScale = new Vector3(scale, scale, scale);
+	}
+
+	public void SetScale(Vector3 scaleV)
+	{
+		if (scaleV == null)
+		{
+			return;
+		}
+
+		image.rectTransform.localScale = scaleV;
+	}
+
 	void UpdatePosition()
 	{
 		if (image == null)
@@ -61,7 +81,7 @@ public class SpriteObjectTracker : MonoBehaviour {
 					float interval = minRange - fullSizeRange;
 					scale = 1f - t/interval;
 				}
-				image.rectTransform.localScale = new Vector3(scale, scale, scale);
+				this.SetScale(scale);
 			}
 		}
 

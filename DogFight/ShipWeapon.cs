@@ -38,7 +38,7 @@ public class ShipWeapon : MonoBehaviour
 
 	public Vector3 GetReticleSize()
 	{
-		float size = this.FireArcDegrees / 180f;
+		float size = this.FireArcDegrees / 15f;
 		return new Vector3(size, size, size);
 	}
 
