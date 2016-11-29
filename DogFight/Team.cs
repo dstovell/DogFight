@@ -13,15 +13,7 @@ public class Team : MonoBehaviour
 
 	void Start()
 	{
-		this.SpawnTeamMember(this.Human, true);
-
-		if (this.AIs != null)
-		{
-			for (int i=0; i<this.AIs.Length; i++)
-			{
-				this.SpawnTeamMember(this.AIs[i]);
-			}
-		}
+		
 	}
 
 	void Update()
@@ -32,6 +24,19 @@ public class Team : MonoBehaviour
 	public bool IsHumanTeam()
 	{
 		return (this.Human != null);
+	}
+
+	public void SpawnTeamMembers()
+	{
+		this.SpawnTeamMember(this.Human, true);
+
+		if (this.AIs != null)
+		{
+			for (int i=0; i<this.AIs.Length; i++)
+			{
+				this.SpawnTeamMember(this.AIs[i]);
+			}
+		}
 	}
 
 	private void SpawnTeamMember(GameObject prefab, bool isHuman = false)

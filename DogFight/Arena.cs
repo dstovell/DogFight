@@ -34,11 +34,16 @@ public class Arena : MonoBehaviour {
 	void Awake()
 	{
 		Arena.Instance = this;
-		GenerateArena();
 	}
 
 	void Start() 
 	{
+		GenerateArena();
+
+		for (int i=0; i<this.Teams.Length; i++)
+		{
+			this.Teams[i].SpawnTeamMembers();
+		}
 	}
 
 	void Update() 
@@ -55,6 +60,8 @@ public class Arena : MonoBehaviour {
 
 	public float AsteroidSpawnCount = 20;
 	public GameObject [] Asteroids;
+
+	public Team [] Teams;
 
 	private List<ArenaSpawn> Spawns = new List<ArenaSpawn>();
 	private GameObject NavPoints;
