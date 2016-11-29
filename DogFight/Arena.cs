@@ -6,6 +6,27 @@ using Pathfinding;
 namespace DogFight
 {
 
+public class ArenaSpawn
+{
+	public GameObject HumanEnd;
+	public GameObject AIEnd;
+	public ShipController AssignedTo;
+
+	public Vector3 GetNearestEnd(Vector3 pos)
+	{
+		float distHuman = Vector3.Distance(this.HumanEnd.transform.position, pos);
+		float distAI = Vector3.Distance(this.AIEnd.transform.position, pos);
+		return (distHuman > distAI) ? this.AIEnd.transform.position : this.HumanEnd.transform.position;
+	}
+
+	public Vector3 GetFurthestEnd(Vector3 pos)
+	{
+		float distHuman = Vector3.Distance(this.HumanEnd.transform.position, pos);
+		float distAI = Vector3.Distance(this.AIEnd.transform.position, pos);
+		return (distHuman < distAI) ? this.AIEnd.transform.position : this.HumanEnd.transform.position;
+	}
+}
+
 public class Arena : MonoBehaviour {
 
 	static public Arena Instance;
@@ -32,12 +53,10 @@ public class Arena : MonoBehaviour {
 	public float ArenaSegmentSpacing = 20f;
 	public float ArenaSegmentLength = 40f;
 
-	public GameObject EndA;
-	public GameObject EndB;
-
 	public float AsteroidSpawnCount = 20;
 	public GameObject [] Asteroids;
 
+	private List<ArenaSpawn> Spawns = new List<ArenaSpawn>();
 	private GameObject NavPoints;
 
 	private GameObject AddNavPoint(Vector3 pos, Transform parent)
@@ -88,6 +107,50 @@ public class Arena : MonoBehaviour {
 		}
 	}
 
+	public void AddSpawn(Vector3 humanPos, Vector3 aiPos)
+	{
+		int spawnIndex = this.Spawns.Count;
+		ArenaSpawn spawn = new ArenaSpawn(); 
+		spawn.HumanEnd = this.AddNavPoint(humanPos, this.transform);
+		spawn.HumanEnd.name = "HumanEnd" + spawnIndex;
+		spawn.AIEnd = this.AddNavPoint(aiPos, this.transform);
+		spawn.AIEnd.name = "AIEnd" + spawnIndex;
+	
+		this.Spawns.Add(spawn);
+	}
+
+	public bool AssignSpawn(ShipController ship)
+	{
+		float initialSpawnSeperation = 2f*this.ArenaCapLength;
+
+		for (int i=0; i<this.Spawns.Count; i++)
+		{
+			ArenaSpawn spawn = this.Spawns[i];
+			if (spawn.AssignedTo == null)
+			{
+				spawn.AssignedTo = ship;
+				ship.Spawn = spawn;
+				if (ship.Pilot == ShipController.PilotType.Human)
+				{
+					Vector3 lookDir = Vector3.forward;
+					ship.transform.position = spawn.HumanEnd.transform.position - initialSpawnSeperation*lookDir;
+					ship.transform.rotation = Quaternion.LookRotation(lookDir);
+					ship.MoveTo(spawn.AIEnd.transform.position);
+				}
+				else
+				{
+					Vector3 lookDir = -1*Vector3.forward;
+					ship.transform.position = spawn.AIEnd.transform.position - initialSpawnSeperation*lookDir;
+					ship.transform.rotation = Quaternion.LookRotation(lookDir);
+					ship.MoveTo(spawn.HumanEnd.transform.position);
+				}
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public void GenerateArena()
 	{
 		List<Vector3> navPointPositions = new List<Vector3>();
@@ -102,11 +165,13 @@ public class Arena : MonoBehaviour {
 			this.GenerateSegment(pos, navPointPositions);
 		}
 
-		this.EndA = this.AddNavPoint(new Vector3(0f, 0f, -1.0f*this.ArenaCapLength), this.transform);
-		this.EndA.name = "EndA";
-		this.EndB = this.AddNavPoint(new Vector3(0f, 0f, this.ArenaLength - this.ArenaSegmentLength + this.ArenaCapLength), this.transform);
-		this.EndB.name = "EndB";
+		Vector3 humanCenter = new Vector3(0f, 0f, -1.0f*this.ArenaCapLength);
+		Vector3 aiCenter = new Vector3(0f, 0f, this.ArenaLength - this.ArenaSegmentLength + this.ArenaCapLength);
 
+		Vector3 seperationVector = this.ArenaSegmentSpacing * Vector3.right;
+		this.AddSpawn(humanCenter+seperationVector, aiCenter+seperationVector);
+		this.AddSpawn(humanCenter-seperationVector, aiCenter-seperationVector);
+			
 		GameObject asteroidContainer = new GameObject("Asteroids");
 		asteroidContainer.transform.SetParent(this.transform);
 		for (int a=0; a<this.AsteroidSpawnCount; a++)

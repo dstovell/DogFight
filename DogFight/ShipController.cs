@@ -35,6 +35,8 @@ public class ShipController : MessengerListener
 	public Seeker Seeker;
 	public GameObject Rotator;
 
+	public ArenaSpawn Spawn;
+
 	public SpriteObjectTracker Reticle;
 
 	public ShipWeapon PrimaryWeapon;
@@ -65,15 +67,6 @@ public class ShipController : MessengerListener
 		{
 			this.StartRotate = this.Rotator.transform.localRotation.z;
 			this.CurrentRotate = this.StartRotate;
-		}
-
-		if (this.Pilot == PilotType.Human)
-		{
-			this.MoveTo( Arena.Instance.EndB.transform.position );
-		}
-		else if (this.Pilot == PilotType.AI)
-		{
-			this.MoveTo( Arena.Instance.EndA.transform.position );
 		}
 
 		this.LoadWeapon(this.PrimaryWeapon);
