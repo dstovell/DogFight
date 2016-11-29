@@ -9,6 +9,8 @@ namespace DogFight
 
 public class ShipController : MessengerListener
 {
+	static private List<ShipController> Ships = new List<ShipController>();
+
 	public enum PilotType
 	{
 		AI,
@@ -41,7 +43,7 @@ public class ShipController : MessengerListener
 
 	public ShipWeapon PrimaryWeapon;
 
-	public ShipController [] HostileShips;
+	public List<ShipController> HostileShips = new List<ShipController>();
 
 	private Rigidbody rb;
 
@@ -53,6 +55,28 @@ public class ShipController : MessengerListener
 
 	public bool RotateStarted = false;
 	private float NextIdleRotateDir = 1;
+
+	public static ShipController GetHuman()
+	{
+		for (int i=0; i<ShipController.Ships.Count; i++)
+		{
+			if (ShipController.Ships[i].Pilot == PilotType.Human)
+			{
+				return ShipController.Ships[i];
+			}
+		}
+		return null;
+	}
+
+	void Awake()
+	{
+		ShipController.Ships.Add(this);
+	}
+
+	void OnDestroy()
+	{
+		ShipController.Ships.Remove(this);
+	}
 
 	// Use this for initialization
 	void Start() 
@@ -111,9 +135,10 @@ public class ShipController : MessengerListener
 		this.currentSpeed = this.MoveSpeed * Mathf.Min(distanceToLeader/this.DesiredLeaderDist, 2.0f);
 		this.transform.position += this.transform.forward * this.currentSpeed * Time.deltaTime;
 
-		UpdateThrusters();
-		UpdateRotator();
-		UpdateWeapons();
+		this.UpdateThrusters();
+		this.UpdateRotator();
+		this.UpdateWeapons();
+		this.ScanForHostiles();
 	}
 
 	private void UpdateThrusters()
@@ -201,16 +226,37 @@ public class ShipController : MessengerListener
 		}
 	}
 
+	private void ScanForHostiles()
+	{
+		for (int i=0; i<ShipController.Ships.Count; i++)
+		{
+			ShipController ship = ShipController.Ships[i];
+			if ((ship == null) || (ship == this))
+			{
+				continue;
+			}
+
+			if (!this.HostileShips.Contains(ship))
+			{
+				this.HostileShips.Add(ship);
+			}
+		}
+	}
+
 	private void UpdateWeapons()
 	{
-		if (this.HostileShips == null)
+		if (this.PrimaryWeapon == null)
 		{
 			return;
 		}
 
-		for (int i=0; i<this.HostileShips.Length; i++)
+		for (int i=0; i<this.HostileShips.Count; i++)
 		{
 			ShipController hostile = this.HostileShips[i];
+			if (hostile == null)
+			{
+				continue;
+			}
 			bool isFiring = this.IsFiring(this.PrimaryWeapon);
 			bool inFireArc = this.IsInFireArc(this.PrimaryWeapon, hostile.gameObject);
 			if (!isFiring && inFireArc)

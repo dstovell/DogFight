@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace DogFight
 {
@@ -8,6 +9,8 @@ public class HudController : MonoBehaviour
 {
 	public GameObject ReticlePrefab;
 	public GameObject TargetPrefab;
+
+	public List<SpriteObjectTracker> Targets;
 
 	public void CreateHud(ShipController humanShip, GameObject lookAt)
 	{
@@ -34,6 +37,7 @@ public class HudController : MonoBehaviour
 		}
 		reticle.transform.SetParent(this.transform);
 		tracker.target = ship.gameObject;
+		this.Targets.Add(tracker);
 	}
 
 	// Use this for initialization
@@ -45,7 +49,16 @@ public class HudController : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
-	
+		ShipController human = ShipController.GetHuman();
+		if (human == null)
+		{
+			return;
+		}
+
+		for (int i=0; i<this.Targets.Count; i++)
+		{
+			this.Targets[i].viewPosition = human.gameObject;
+		}
 	}
 }
 
