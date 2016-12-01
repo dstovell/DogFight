@@ -49,6 +49,7 @@ public class ShipController : MessengerListener
 
 	public List<ShipController> HostileShips = new List<ShipController>();
 
+	private Damageable damagable;
 	private Rigidbody rb;
 
 	private float currentSpeed = 0f;
@@ -75,6 +76,9 @@ public class ShipController : MessengerListener
 	void Awake()
 	{
 		ShipController.Ships.Add(this);
+
+		this.rb = this.gameObject.GetComponent<Rigidbody>();
+		this.damagable = this.gameObject.GetComponent<Damageable>();
 	}
 
 	void OnDestroy()
@@ -86,7 +90,6 @@ public class ShipController : MessengerListener
 	void Start() 
 	{
 		this.InitMessenger("ShipController");
-		this.rb = this.gameObject.GetComponent<Rigidbody>();
 
 		this.Leader.gameObject.transform.SetParent(null);
 		this.Leader.SetSpeed(this.MoveSpeed);
@@ -118,6 +121,15 @@ public class ShipController : MessengerListener
 
 	void Update() 
 	{
+		if (this.IsDead())
+		{
+			this.StopFiring(this.LoadedWeapon);
+			this.Stop();
+			float deadSpeed = 0.2f * this.MoveSpeed;
+			this.transform.position += this.transform.forward * deadSpeed * Time.deltaTime;
+			return;
+		}
+
 		if (this.Leader.transform.position == this.transform.position)
 		{
 			return;
@@ -367,6 +379,11 @@ public class ShipController : MessengerListener
 	public bool IsMoving()
 	{
 		return this.Leader.IsMoving();
+	}
+
+	public bool IsDead()
+	{
+		return this.damagable.IsDead();
 	}
 
 	public void MoveTo(Vector3 to)

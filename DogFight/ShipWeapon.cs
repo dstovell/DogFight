@@ -90,12 +90,24 @@ public class ShipWeapon : MonoBehaviour
 			Transform barrel = this.Barrels[i];
 			if (barrel != null)
 			{
-				barrel.rotation = (target != null) ? Quaternion.LookRotation( (target.transform.position - barrel.position).normalized ) : Quaternion.identity;
+				if (target != null)
+				{
+					barrel.rotation = Quaternion.LookRotation( (target.transform.position - barrel.position).normalized );
+				}
+				else
+				{
+					barrel.localRotation = Quaternion.identity;
+				}
 			}
 		}
 
 		this.FX.Fire();
 		this.isFiring = true;
+
+		if (target != null)
+		{
+			this.OnHit(target);
+		}
 
 		float burstTime = Mathf.Max(this.BurstTime, 0.1f);
 		StartCoroutine( StopFiringInSeconds(burstTime) );
@@ -116,7 +128,27 @@ public class ShipWeapon : MonoBehaviour
 
 	public void OnHit(GameObject target)
 	{
-		
+		Damageable dam = target.GetComponent<Damageable>();
+		if (dam != null)
+		{
+			OnHit(dam);
+			return;
+		}
+
+		Damageable parentDam = target.GetComponentInParent<Damageable>();
+		if (parentDam != null)
+		{
+			OnHit(parentDam);
+			return;
+		}
+	}
+
+	public void OnHit(Damageable target)
+	{
+		if (target != null)
+		{
+			target.Damage(this.Damage);
+		}
 	}
 }
 
