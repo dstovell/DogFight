@@ -154,9 +154,8 @@ public class ShipController : MessengerListener
 
 		if (this.isCoasting)
 		{
-			this.currentSpeed *= 0.99f;
+			this.currentSpeed *= 0.999f;
 			this.transform.position += this.coastVector * this.currentSpeed * Time.deltaTime;
-			//this.Leader.transform.position = this.transform.position;
 
 			this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, desiredRotation, this.RotateSpeed*Time.deltaTime);
 
@@ -171,6 +170,7 @@ public class ShipController : MessengerListener
 			this.currentMoveFrom = this.Leader.transform.position;
 			this.currentMoveTo = otherSide;
 			this.StartCoroutine( this.CoastForSeconds(3f) );
+			return;
 		}
 
 		if (!this.IsMoving())
@@ -198,6 +198,11 @@ public class ShipController : MessengerListener
 		float distanceToLeader = Vector3.Distance(this.transform.position, this.Leader.transform.position);
 		this.currentSpeed = this.MoveSpeed * Mathf.Min(distanceToLeader/this.DesiredLeaderDist, 2.0f);
 		this.transform.position += this.transform.forward * this.currentSpeed * Time.deltaTime;
+
+		if (this.Leader.IsMoving() && (distanceToLeader > 1.5f*this.currentSpeed))
+		{
+			this.Leader.Pause(0.01f);
+		}
 
 		this.UpdateThrusters();
 		this.UpdateRotator();

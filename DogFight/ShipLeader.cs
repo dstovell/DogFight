@@ -46,6 +46,11 @@ public class ShipLeader : MonoBehaviour
 		return path;
 	}
 
+	public void Pause(float secs)
+	{
+		this.mover.Pause(secs);
+	}
+
 	public void SetSpeed(float speed)
 	{
 		this.mover.speed = speed;
@@ -72,7 +77,14 @@ public class ShipLeader : MonoBehaviour
 			return false;
 		}
 
-		return  (this.mover.currentPoint == (this.mover.waypoints.Length-1));
+		bool isLastPoint = (this.mover.currentPoint == (this.mover.waypoints.Length-1));
+		if (!isLastPoint)
+		{
+			return false;
+		}
+
+		float distanceToPoint = Vector3.Distance(this.transform.position, this.mover.waypoints[this.mover.currentPoint]);
+		return (distanceToPoint == 0f);
 	}
 
 	public bool IsMoving()
