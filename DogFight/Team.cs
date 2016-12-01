@@ -1,19 +1,27 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace DogFight
 {
 
 public class Team : MonoBehaviour
 {
+	static public List<Team> Teams = new List<Team>();
+
 	public GameObject Human;
 	public GameObject [] AIs;
 
 	public HudController HUD;
 
-	void Start()
+	void Awake()
 	{
-		
+		Team.Teams.Add(this);
+	}
+
+	void OnDestroy()
+	{
+		Team.Teams.Remove(this);
 	}
 
 	void Update()
@@ -74,6 +82,7 @@ public class Team : MonoBehaviour
 				orbitCam.SetTarget(obj);
 				if (lookAt != null)
 				{
+					orbitCam.itsLookat.itsEnable = true;
 					orbitCam.SetLookatTarget(lookAt);
 				}
 			}

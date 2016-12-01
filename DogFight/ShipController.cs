@@ -9,7 +9,7 @@ namespace DogFight
 
 public class ShipController : MessengerListener
 {
-	static private List<ShipController> Ships = new List<ShipController>();
+	static public List<ShipController> Ships = new List<ShipController>();
 
 	public enum PilotType
 	{
@@ -39,7 +39,11 @@ public class ShipController : MessengerListener
 
 	public ArenaSpawn Spawn;
 
+	public bool AutoFiring = false;
+
 	public SpriteObjectTracker Reticle;
+
+	public ShipWeapon LoadedWeapon;
 
 	public ShipWeapon PrimaryWeapon;
 
@@ -109,6 +113,7 @@ public class ShipController : MessengerListener
 		{
 			this.Reticle.SetScale(weapon.GetReticleSize());
 		}
+		this.LoadedWeapon = weapon;
 	}
 
 	void Update() 
@@ -245,27 +250,30 @@ public class ShipController : MessengerListener
 
 	private void UpdateWeapons()
 	{
-		if (this.PrimaryWeapon == null)
+		if (this.LoadedWeapon == null)
 		{
 			return;
 		}
 
-		for (int i=0; i<this.HostileShips.Count; i++)
+		if (this.AutoFiring)
 		{
-			ShipController hostile = this.HostileShips[i];
-			if (hostile == null)
+			for (int i=0; i<this.HostileShips.Count; i++)
 			{
-				continue;
-			}
-			bool isFiring = this.IsFiring(this.PrimaryWeapon);
-			bool inFireArc = this.IsInFireArc(this.PrimaryWeapon, hostile.gameObject);
-			if (!isFiring && inFireArc)
-			{
-				this.FireAt(this.PrimaryWeapon, hostile.gameObject);
-			}
-			else if (isFiring && !inFireArc)
-			{
-				this.StopFiring(this.PrimaryWeapon);
+				ShipController hostile = this.HostileShips[i];
+				if (hostile == null)
+				{
+					continue;
+				}
+				bool isFiring = this.IsFiring(this.LoadedWeapon);
+				bool inFireArc = this.IsInFireArc(this.LoadedWeapon, hostile.gameObject);
+				if (!isFiring && inFireArc)
+				{
+					this.FireAt(this.LoadedWeapon, hostile.gameObject);
+				}
+				else if (isFiring && !inFireArc)
+				{
+					this.StopFiring(this.LoadedWeapon);
+				}
 			}
 		}
 	}
@@ -290,6 +298,37 @@ public class ShipController : MessengerListener
 		weapon.FireAt(target);
 	}
 
+	public void FireAt(Vector2 screenPoint)
+	{
+		if (this.LoadedWeapon == null)
+		{
+			return;
+		}
+
+		float screenDistance = 9999f;
+		GameObject target = null;
+		for (int i=0; i<this.HostileShips.Count; i++)
+		{
+			ShipController hostile = this.HostileShips[i];
+			if (hostile == null)
+			{
+				continue;
+			}
+			bool inFireArc = this.IsInFireArc(this.LoadedWeapon, hostile.gameObject);
+			if (inFireArc)
+			{
+				Vector3 screenPos = Camera.main.WorldToViewportPoint(hostile.transform.position);
+				float dist = Vector3.Distance(screenPos, screenPoint);
+				if (dist < screenDistance)
+				{
+					target = hostile.gameObject;
+				}
+			}
+		}
+
+		this.LoadedWeapon.FireAt(target);
+	}
+
 	public bool IsFiring(ShipWeapon weapon)
 	{
 		if (weapon == null)
@@ -312,7 +351,7 @@ public class ShipController : MessengerListener
 
 	public Vector3 GetReticleSize()
 	{
-		return this.PrimaryWeapon.GetReticleSize();
+		return (this.LoadedWeapon != null) ? this.LoadedWeapon.GetReticleSize() : Vector3.zero;
 	}
 
 	public bool IsFacing(Vector3 dir)
@@ -369,6 +408,31 @@ public class ShipController : MessengerListener
 	void OnCollisionEnter(Collision info)
 	{
 		//GameObject obj = info.collider.gameObject;
+	}
+
+	public override void OnMessage(string id, object obj1, object obj2)
+	{
+		switch(id)
+		{
+		case "tap":
+		{
+			Vector2 screenPoint = (Vector2)obj1;
+			if (!this.AutoFiring)
+			{
+				this.FireAt(screenPoint);
+			}
+		}
+		break;
+
+		case "flick":
+		{
+			Vector2 flickVector = (Vector2)obj1;
+		}
+		break;
+
+		default:
+			break;
+		}
 	}
 }
 

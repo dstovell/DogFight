@@ -10,6 +10,7 @@ public class ShipWeapon : MonoBehaviour
 	public WeaponFXController FX;
 
 	public Forge3D.F3DFXType FxType;
+	public float BurstTime;
 	public float FireCooldown;
 	public float Damage;
 	public float MaxRange;
@@ -84,17 +85,34 @@ public class ShipWeapon : MonoBehaviour
 			return;
 		}
 
+		for (int i=0; i<this.Barrels.Length; i++)
+		{
+			Transform barrel = this.Barrels[i];
+			if (barrel != null)
+			{
+				barrel.rotation = (target != null) ? Quaternion.LookRotation( (target.transform.position - barrel.position).normalized ) : Quaternion.identity;
+			}
+		}
+
 		this.FX.Fire();
 		this.isFiring = true;
 
-		this.currentCooldown = this.FireCooldown;
+		float burstTime = Mathf.Max(this.BurstTime, 0.1f);
+		StartCoroutine( StopFiringInSeconds(burstTime) );
 	}
 
 	public void StopFiring()
 	{
+		this.currentCooldown = this.FireCooldown;
 		this.isFiring = false;
 		this.FX.Stop();
 	}
+
+	private IEnumerator StopFiringInSeconds(float seconds) 
+	{
+		yield return new WaitForSeconds(seconds);
+		this.StopFiring();
+ 	}
 
 	public void OnHit(GameObject target)
 	{
