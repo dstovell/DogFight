@@ -37,6 +37,11 @@ public class ShipController : MessengerListener
 	public Seeker Seeker;
 	public GameObject Rotator;
 
+	public GameObject [] Thrusters;
+
+	private Vector3 currentMoveFrom;
+	private Vector3 currentMoveTo;
+
 	public ArenaSpawn Spawn;
 
 	public bool AutoFiring = false;
@@ -52,6 +57,8 @@ public class ShipController : MessengerListener
 	private Damageable damagable;
 	private Rigidbody rb;
 
+	private Vector3 coastVector;
+	private bool isCoasting = false;
 	private float currentSpeed = 0f;
 
 	public float StartRotate = 0f;
@@ -60,6 +67,8 @@ public class ShipController : MessengerListener
 
 	public bool RotateStarted = false;
 	private float NextIdleRotateDir = 1;
+
+	private bool isPathfinding = false;
 
 	public static ShipController GetHuman()
 	{
@@ -91,6 +100,7 @@ public class ShipController : MessengerListener
 	{
 		this.InitMessenger("ShipController");
 
+		this.Leader.gameObject.name = this.gameObject.name + "_Leader";
 		this.Leader.gameObject.transform.SetParent(null);
 		this.Leader.SetSpeed(this.MoveSpeed);
 
@@ -119,6 +129,15 @@ public class ShipController : MessengerListener
 		this.LoadedWeapon = weapon;
 	}
 
+	private IEnumerator CoastForSeconds(float secs) 
+	{
+		this.coastVector = this.transform.forward;
+		this.isCoasting = true;
+		yield return new WaitForSeconds(secs);
+
+		this.isCoasting = false;
+ 	}
+
 	void Update() 
 	{
 		if (this.IsDead())
@@ -130,13 +149,41 @@ public class ShipController : MessengerListener
 			return;
 		}
 
+		Vector3 desiredDirection = (this.Leader.transform.position - this.transform.position).normalized;
+		Quaternion desiredRotation = Quaternion.LookRotation(desiredDirection);
+
+		if (this.isCoasting)
+		{
+			this.currentSpeed *= 0.99f;
+			this.transform.position += this.coastVector * this.currentSpeed * Time.deltaTime;
+			//this.Leader.transform.position = this.transform.position;
+
+			this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, desiredRotation, this.RotateSpeed*Time.deltaTime);
+
+			this.UpdateThrusters();
+			return;
+		}
+
+		if (this.Leader.IsAtDestination())
+		{
+			this.Stop();
+			Vector3 otherSide = this.Spawn.GetFurthestEnd(this.Leader.transform.position);
+			this.currentMoveFrom = this.Leader.transform.position;
+			this.currentMoveTo = otherSide;
+			this.StartCoroutine( this.CoastForSeconds(3f) );
+		}
+
+		if (!this.IsMoving())
+		{
+			this.ContinueCurrentMove();
+			return;
+		}
+
 		if (this.Leader.transform.position == this.transform.position)
 		{
 			return;
 		}
 
-		Vector3 desiredDirection = (this.Leader.transform.position - this.transform.position).normalized;
-		Quaternion desiredRotation = Quaternion.LookRotation(desiredDirection);
 		this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, desiredRotation, this.RotateSpeed*Time.deltaTime);
 		float turnAngleRemaining = Quaternion.Angle(this.transform.rotation, desiredRotation);
 		if (turnAngleRemaining < 0.1f)
@@ -160,6 +207,18 @@ public class ShipController : MessengerListener
 
 	private void UpdateThrusters()
 	{
+		for (int i=0; i<this.Thrusters.Length; i++)
+		{
+			TrailRenderer trail = this.Thrusters[i].GetComponent<TrailRenderer>();
+			if (this.isCoasting)
+			{
+				trail.time = Mathf.Max(0.0f, trail.time-0.01f);
+			}
+			else
+			{
+				trail.time = Mathf.Min(0.5f, trail.time+0.01f);
+			}
+		}
 	}
 
 	private void SetRotateMode(RotateMode m)
@@ -388,23 +447,48 @@ public class ShipController : MessengerListener
 
 	public void MoveTo(Vector3 to)
 	{
-		this.Seeker.StartPath(this.Leader.transform.position, to, OnMovePathComplete);
+		if (this.isPathfinding)
+		{
+			return;
+		}
+		this.isPathfinding = true;
+
+		this.currentMoveFrom = this.Leader.transform.position;
+		this.currentMoveTo = to;
+
+		this.ContinueCurrentMove();
 	}
 
 	public void MovePath(Vector3 from, Vector3 to)
 	{
-		this.Seeker.StartPath(from, to, OnMovePathComplete);
+		if (this.isPathfinding)
+		{
+			return;
+		}
+		this.isPathfinding = true;
+
+		this.currentMoveFrom = from;
+		this.currentMoveTo = to;
+
+		this.ContinueCurrentMove();
+	}
+
+	private void ContinueCurrentMove()
+	{
+		this.Seeker.StartPath(this.currentMoveFrom, this.currentMoveTo, OnMovePathComplete);
 	}
 
 	private void OnMovePathComplete(Path p) 
 	{
 		p.Claim(this);
 		this.MovePath(p.vectorPath);
+
+		this.isPathfinding = false;
 	}
 
 	public void MovePath(List<Vector3> points)
 	{
-		this.Leader.MovePath(points, true);
+		this.Leader.MovePath(points);
 	}
 
 	public void Stop()

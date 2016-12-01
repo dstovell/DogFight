@@ -53,15 +53,40 @@ public class ShipLeader : MonoBehaviour
 
 	public void MovePath(List<Vector3> points, bool loop = false)
 	{
-		this.currentPath = this.GeneratePathManager("Ship", points);
+		if (this.currentPath != null)
+		{
+			GameObject.DestroyImmediate(this.currentPath.gameObject);
+			this.currentPath = null;
+		}
+
+		this.currentPath = this.GeneratePathManager(this.gameObject.name, points);
 		this.mover.moveToPath = true;
 		this.mover.loopType = loop ? SWS.splineMove.LoopType.pingPong : SWS.splineMove.LoopType.none;
 		this.mover.SetPath(this.currentPath);
 	}
 
+	public bool IsAtDestination()
+	{
+		if ((this.currentPath == null) || (this.mover == null) || (this.mover.waypoints == null))
+		{
+			return false;
+		}
+
+		return  (this.mover.currentPoint == (this.mover.waypoints.Length-1));
+	}
+
 	public bool IsMoving()
 	{
 		return (this.currentPath != null);
+	}
+
+	public void DestroyPath()
+	{
+		if (this.currentPath != null)
+		{
+			GameObject.DestroyImmediate(this.currentPath.gameObject);
+			this.currentPath = null;
+		}
 	}
 
 	public void Stop()
@@ -70,11 +95,7 @@ public class ShipLeader : MonoBehaviour
 		{
 			this.mover.Stop();
 		}
-		if (this.currentPath != null)
-		{
-			GameObject.Destroy(this.currentPath.gameObject);
-			this.currentPath = null;
-		}
+		DestroyPath();
 	}
 }
 
