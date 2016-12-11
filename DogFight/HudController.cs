@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -9,8 +10,11 @@ public class HudController : MonoBehaviour
 {
 	public GameObject ReticlePrefab;
 	public GameObject TargetPrefab;
+	public GameObject DirectionPrefab;
 
 	public List<SpriteObjectTracker> Targets;
+
+	public List<Image> DirectionIndicators;
 
 	public void CreateHud(ShipController humanShip, GameObject lookAt)
 	{
@@ -40,10 +44,28 @@ public class HudController : MonoBehaviour
 		this.Targets.Add(tracker);
 	}
 
-	// Use this for initialization
-	void Start ()
+	void Start()
 	{
-	
+		this.DirectionIndicators = new List<Image>();
+		int maxDirections = 10;
+		if (this.DirectionPrefab != null)
+		{
+			for (int i=0; i<maxDirections; i++)
+			{
+				GameObject obj = GameObject.Instantiate(this.DirectionPrefab) as GameObject;
+				Image img = obj.GetComponent<Image>();
+				if (img == null)
+				{
+					GameObject.Destroy(obj);
+				}
+				else
+				{
+					img.enabled = false;
+					this.DirectionIndicators.Add(img);
+					obj.transform.SetParent(this.transform);
+				}
+			}
+		}
 	}
 	
 	// Update is called once per frame
@@ -58,6 +80,25 @@ public class HudController : MonoBehaviour
 		for (int i=0; i<this.Targets.Count; i++)
 		{
 			this.Targets[i].viewPosition = human.gameObject;
+		}
+
+		List<AvailableMove> moves = human.GetAvailableMoves();
+		float reticleScale = human.Reticle.image.rectTransform.localScale.x;
+		for (int i=0; i<this.DirectionIndicators.Count; i++)
+		{
+			Image img = this.DirectionIndicators[i];
+			if (i < moves.Count)
+			{
+				AvailableMove move = moves[i];
+				img.enabled = true;
+				//img.tras
+				img.transform.SetParent(human.Reticle.transform);
+				img.transform.localPosition = reticleScale * 40f * move.projection;
+			}
+			else 
+			{
+				img.enabled = false;
+			}
 		}
 	}
 }

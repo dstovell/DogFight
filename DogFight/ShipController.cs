@@ -7,6 +7,25 @@ using DSTools;
 namespace DogFight
 {
 
+public class AvailableMove
+{
+	public AvailableMove(Vector3 pos, Vector3 conPos, Vector2 proj)
+	{
+		this.position = pos;	
+		this.projection = proj;
+		this.connectionPosition = conPos;
+	}
+
+	public float AngleBetween(Vector2 a)
+	{
+		return Vector2.Angle(this.projection, a);
+	}
+
+	public Vector3 position;
+	public Vector2 projection;
+	public Vector3 connectionPosition;
+}
+
 public class ShipController : MessengerListener
 {
 	static public List<ShipController> Ships = new List<ShipController>();
@@ -41,6 +60,9 @@ public class ShipController : MessengerListener
 
 	private Vector3 currentMoveFrom;
 	private Vector3 currentMoveTo;
+
+	private bool changingPath = false;
+	private Vector3 pathMergePoint;
 
 	public ArenaSpawn Spawn;
 
@@ -154,7 +176,7 @@ public class ShipController : MessengerListener
 
 		if (this.isCoasting)
 		{
-			this.currentSpeed *= 0.999f;
+			this.currentSpeed *= 1.02f;
 			this.transform.position += this.coastVector * this.currentSpeed * Time.deltaTime;
 
 			this.UpdateThrusters();
@@ -167,7 +189,7 @@ public class ShipController : MessengerListener
 			Vector3 otherSide = this.Spawn.GetFurthestEnd(this.Leader.transform.position);
 			this.currentMoveFrom = this.Leader.transform.position;
 			this.currentMoveTo = otherSide;
-			this.StartCoroutine( this.CoastForSeconds(3f) );
+			this.StartCoroutine( this.CoastForSeconds(1.5f) );
 			return;
 		}
 
@@ -210,18 +232,18 @@ public class ShipController : MessengerListener
 
 	private void UpdateThrusters()
 	{
-		for (int i=0; i<this.Thrusters.Length; i++)
-		{
-			TrailRenderer trail = this.Thrusters[i].GetComponent<TrailRenderer>();
-			if (this.isCoasting)
-			{
-				trail.time = Mathf.Max(0.0f, trail.time-0.01f);
-			}
-			else
-			{
-				trail.time = Mathf.Min(0.5f, trail.time+0.01f);
-			}
-		}
+//		for (int i=0; i<this.Thrusters.Length; i++)
+//		{
+//			TrailRenderer trail = this.Thrusters[i].GetComponent<TrailRenderer>();
+//			if (this.isCoasting)
+//			{
+//				trail.time = Mathf.Max(0.0f, trail.time-0.01f);
+//			}
+//			else
+//			{
+//				trail.time = Mathf.Min(0.5f, trail.time+0.01f);
+//			}
+//		}
 	}
 
 	private void SetRotateMode(RotateMode m)
@@ -350,6 +372,65 @@ public class ShipController : MessengerListener
 				}
 			}
 		}
+	}
+
+	public List<AvailableMove> GetAvailableMoves()
+	{
+		float minDistance = 100;
+		List<AvailableMove> moves = new List<AvailableMove>();
+		NNInfo nextNodeInfo = this.GetNextNode(minDistance);
+		if (nextNodeInfo.node != null)
+		{
+			PointNode nextNode = nextNodeInfo.node as PointNode;
+			Vector3 nextNodePos = (Vector3)nextNode.position;
+			if (nextNode != null)
+			{
+				for (int i=0; i<nextNode.connections.Length; i++)
+				{
+					GraphNode moveNode = nextNode.connections[i];
+					Vector3 pos = (Vector3)moveNode.position;
+					if (this.Leader.IsOnCurrentPath(pos))
+					{
+						continue;
+					}
+
+					if (this.transform.forward.z > 0)
+					{
+						if (pos.z > this.transform.position.z)
+						{
+							moves.Add(new AvailableMove(pos, nextNodePos, this.ProjectPoint(pos)));
+						}
+					}
+					else
+					{
+						if (pos.z < this.transform.position.z)
+						{
+							moves.Add(new AvailableMove(pos, nextNodePos, this.ProjectPoint(pos)));
+						}
+					}
+				}
+			}
+		}
+		return moves;
+	}
+
+	public Vector2 ProjectPoint(Vector3 pos)
+	{
+		Vector3 currentPos = this.transform.position;
+		Vector2 proj = new Vector2(pos.x - currentPos.x, pos.y - currentPos.y);
+		return proj.normalized;
+	}
+
+	public NNInfo GetNextNode(float minDistance)
+	{
+		Vector3 waypointPos = this.Leader.GetNextWayPoint(minDistance);
+		if (waypointPos == Vector3.zero)
+		{
+			NNInfo nni = new NNInfo();
+			return nni;
+		}
+		NNInfo node = AstarPath.active.astarData.pointGraph.GetNearest(waypointPos);
+		return node;
 	}
 
 	public bool IsInFireArc(ShipWeapon weapon, GameObject target)
@@ -481,10 +562,47 @@ public class ShipController : MessengerListener
 		this.Seeker.StartPath(this.currentMoveFrom, this.currentMoveTo, OnMovePathComplete);
 	}
 
+	private void ChangePath(Vector3 connectionPosition, Vector3 pathStart)
+	{
+		this.pathMergePoint = connectionPosition;
+		this.changingPath = true;
+
+		this.currentMoveFrom = pathStart;
+		this.ContinueCurrentMove();
+	}
+
 	private void OnMovePathComplete(Path p) 
 	{
 		p.Claim(this);
-		this.MovePath(p.vectorPath);
+
+		List<Vector3> newPath = p.vectorPath;
+
+		if (this.changingPath)
+		{
+			newPath = new List<Vector3>();
+			Vector3 [] currentPath = this.Leader.mover.waypoints;
+			int startIndex = this.Leader.mover.currentPoint+1;
+			for (int i=startIndex; i<currentPath.Length; i++)
+			{
+				if (currentPath[i+1] == this.pathMergePoint)
+				{
+					break;
+				}
+
+				newPath.Add(currentPath[i]);
+			}
+
+			for (int j=0; j<p.vectorPath.Count; j++)
+			{
+				newPath.Add(p.vectorPath[j]);
+			}
+
+			this.changingPath = false;
+		}
+
+		this.MovePath(newPath);
+
+		//ArenaManager.Instance.HighlightPath(p.vectorPath);
 
 		this.isPathfinding = false;
 	}
@@ -509,6 +627,35 @@ public class ShipController : MessengerListener
 		p.Claim(this);
 	}
 
+	private void HandleFlick(Vector2 flickVector)
+	{
+		float minThreshold = 10;	
+
+		flickVector.Normalize();
+		List<AvailableMove> moves = this.GetAvailableMoves();
+		float closestAngle = 400;
+		AvailableMove closestMove = null;
+		for (int i=0; i<moves.Count; i++)
+		{
+			float angleBetween = moves[i].AngleBetween(flickVector);
+			if (angleBetween < closestAngle)
+			{
+				closestAngle = angleBetween;
+				closestMove = moves[i];
+			}
+		}
+
+		if (closestAngle <= minThreshold)
+		{
+			Debug.Log("flickVector " + flickVector.ToString());
+			Debug.Log("closestMove proj" + closestMove.projection.ToString());
+			Debug.Log("closestAngle " + closestAngle);
+			Debug.Log("closestMove " + closestMove.position.ToString());
+
+			this.ChangePath(closestMove.connectionPosition, closestMove.position);
+		}
+	}
+
 	void OnCollisionEnter(Collision info)
 	{
 		//GameObject obj = info.collider.gameObject;
@@ -516,6 +663,11 @@ public class ShipController : MessengerListener
 
 	public override void OnMessage(string id, object obj1, object obj2)
 	{
+		if (this.Pilot != PilotType.Human)
+		{
+			return;
+		}
+
 		switch(id)
 		{
 		case "tap":
@@ -531,6 +683,7 @@ public class ShipController : MessengerListener
 		case "flick":
 		{
 			Vector2 flickVector = (Vector2)obj1;
+			this.HandleFlick(flickVector);
 		}
 		break;
 

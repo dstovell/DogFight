@@ -87,6 +87,48 @@ public class ShipLeader : MonoBehaviour
 		return (distanceToPoint == 0f);
 	}
 
+	public Vector3 GetNextWayPoint(float minDistance)
+	{
+		Vector3 nextPos = Vector3.zero;
+		if ((this.currentPath == null) || (this.mover == null) || (this.mover.waypoints == null))
+		{
+			return nextPos;
+		}
+
+		Vector3 currentPos = this.transform.position;
+		int start = this.mover.currentPoint;
+		for (int i=start; i<this.mover.waypoints.Length; i++)
+		{
+			float dist = Vector3.Distance(currentPos, this.mover.waypoints[i]);
+			if (dist >= minDistance)
+			{
+				//Debug.LogError("GetNextWayPoint start=" + start + " i=" + i + " dist=" + dist + " minDistance=" + minDistance );
+				nextPos = this.mover.waypoints[i];
+				break;
+			}
+		}
+
+		return nextPos;
+	}
+
+	public bool IsOnCurrentPath(Vector3 pos)
+	{
+		if ((this.currentPath == null) || (this.mover == null) || (this.mover.waypoints == null))
+		{
+			return false;
+		}
+
+		for (int i=0; i<this.mover.waypoints.Length; i++)
+		{
+			if (this.mover.waypoints[i] == pos)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public bool IsMoving()
 	{
 		return (this.currentPath != null);

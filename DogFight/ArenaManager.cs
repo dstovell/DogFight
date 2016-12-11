@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace DogFight
 {
@@ -7,6 +8,8 @@ namespace DogFight
 public class ArenaManager : MonoBehaviour
 {
 	public static ArenaManager Instance = null;
+
+	public GameObject PathHighlight;
 
 	public enum State
 	{
@@ -16,6 +19,22 @@ public class ArenaManager : MonoBehaviour
 		Outro
 	}
 	public State CurrentState = State.Init;
+
+	public void HighlightPath(List<Vector3> path)
+	{
+		if (this.PathHighlight != null)	
+		{
+			GameObject highlight = GameObject.Instantiate(this.PathHighlight, path[0], Quaternion.identity) as GameObject;
+			ShipLeader leader = highlight.GetComponent<ShipLeader>();
+			if (leader == null)
+			{
+				leader = highlight.AddComponent<ShipLeader>();
+			}
+
+			leader.SetSpeed(500);
+			leader.MovePath(path, false);
+		}
+	}
 
 	void Awake()
 	{

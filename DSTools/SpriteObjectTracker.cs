@@ -34,11 +34,6 @@ public class SpriteObjectTracker : MonoBehaviour {
 
 	public void SetScale(Vector3 scaleV)
 	{
-		if (scaleV == null)
-		{
-			return;
-		}
-
 		image.rectTransform.localScale = scaleV;
 	}
 

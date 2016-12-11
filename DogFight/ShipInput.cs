@@ -84,11 +84,11 @@ public class ShipInput : DSTools.MessengerListener
 
 	private void FlickedHandler(object sender, EventArgs e)
 	{
-		Debug.LogError("FlickedHandler");
+		//Debug.LogError("FlickedHandler");
 		FlickGesture gesture = sender as FlickGesture;
 		if (gesture != null)
 		{
-			Debug.LogError("FlickedHandler got FlickGesture Direction=" + gesture.Direction.ToString() + " ScreenFlickVector=" + gesture.ScreenFlickVector.x + "," + gesture.ScreenFlickVector.y);
+			//Debug.LogError("FlickedHandler got FlickGesture Direction=" + gesture.Direction.ToString() + " ScreenFlickVector=" + gesture.ScreenFlickVector.x + "," + gesture.ScreenFlickVector.y);
 			Vector2 flickVector = gesture.ScreenFlickVector;
 			this.SendMessengerMsg("flick", flickVector);
 		}
