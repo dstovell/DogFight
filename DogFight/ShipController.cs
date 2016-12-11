@@ -157,8 +157,6 @@ public class ShipController : MessengerListener
 			this.currentSpeed *= 0.999f;
 			this.transform.position += this.coastVector * this.currentSpeed * Time.deltaTime;
 
-			this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, desiredRotation, this.RotateSpeed*Time.deltaTime);
-
 			this.UpdateThrusters();
 			return;
 		}
