@@ -374,6 +374,11 @@ public class ShipController : MessengerListener
 		}
 	}
 
+	public List<Vector3> GetAvailableMoveDirections()
+	{
+		return this.Leader.GetChangeSplineDirections();
+	}
+
 	public List<AvailableMove> GetAvailableMoves()
 	{
 		float minDistance = 100;
@@ -629,31 +634,33 @@ public class ShipController : MessengerListener
 
 	private void HandleFlick(Vector2 flickVector)
 	{
-		float minThreshold = 10;	
+		float maxAngle = 30;	
 
 		flickVector.Normalize();
-		List<AvailableMove> moves = this.GetAvailableMoves();
-		float closestAngle = 400;
-		AvailableMove closestMove = null;
-		for (int i=0; i<moves.Count; i++)
-		{
-			float angleBetween = moves[i].AngleBetween(flickVector);
-			if (angleBetween < closestAngle)
-			{
-				closestAngle = angleBetween;
-				closestMove = moves[i];
-			}
-		}
+		this.Leader.ChangeSpline(flickVector, maxAngle);
 
-		if (closestAngle <= minThreshold)
-		{
-			Debug.Log("flickVector " + flickVector.ToString());
-			Debug.Log("closestMove proj" + closestMove.projection.ToString());
-			Debug.Log("closestAngle " + closestAngle);
-			Debug.Log("closestMove " + closestMove.position.ToString());
-
-			this.ChangePath(closestMove.connectionPosition, closestMove.position);
-		}
+//		List<AvailableMove> moves = this.GetAvailableMoves();
+//		float closestAngle = 400;
+//		AvailableMove closestMove = null;
+//		for (int i=0; i<moves.Count; i++)
+//		{
+//			float angleBetween = moves[i].AngleBetween(flickVector);
+//			if (angleBetween < closestAngle)
+//			{
+//				closestAngle = angleBetween;
+//				closestMove = moves[i];
+//			}
+//		}
+//
+//		if (closestAngle <= minThreshold)
+//		{
+//			Debug.Log("flickVector " + flickVector.ToString());
+//			Debug.Log("closestMove proj" + closestMove.projection.ToString());
+//			Debug.Log("closestAngle " + closestAngle);
+//			Debug.Log("closestMove " + closestMove.position.ToString());
+//
+//			this.ChangePath(closestMove.connectionPosition, closestMove.position);
+//		}
 	}
 
 	void OnCollisionEnter(Collision info)

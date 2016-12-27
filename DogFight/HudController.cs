@@ -82,18 +82,17 @@ public class HudController : MonoBehaviour
 			this.Targets[i].viewPosition = human.gameObject;
 		}
 
-		List<AvailableMove> moves = human.GetAvailableMoves();
+		List<Vector3> moves = human.GetAvailableMoveDirections();
 		float reticleScale = human.Reticle.image.rectTransform.localScale.x;
 		for (int i=0; i<this.DirectionIndicators.Count; i++)
 		{
 			Image img = this.DirectionIndicators[i];
 			if (i < moves.Count)
 			{
-				AvailableMove move = moves[i];
 				img.enabled = true;
 				//img.tras
 				img.transform.SetParent(human.Reticle.transform);
-				img.transform.localPosition = reticleScale * 40f * move.projection;
+				img.transform.localPosition = reticleScale * 40f * moves[i];
 			}
 			else 
 			{
