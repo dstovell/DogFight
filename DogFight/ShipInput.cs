@@ -34,14 +34,14 @@ public class ShipInput : DSTools.MessengerListener
 		FlickGesture [] flicks = this.cam.gameObject.GetComponents<FlickGesture>();
 		for (int i=0; i<flicks.Length; i++)
 		{
-			Debug.LogError("ShipInput flick=" + flicks[i].name);
+			//Debug.LogError("ShipInput flick=" + flicks[i].name);
 			flicks[i].Flicked += this.FlickedHandler;
 		}
 
 		TapGesture [] taps = this.cam.gameObject.GetComponents<TapGesture>();
 		for (int i=0; i<taps.Length; i++)
 		{
-			Debug.LogError("ShipInput tap=" + taps[i].name);
+			//Debug.LogError("ShipInput tap=" + taps[i].name);
 			taps[i].Tapped += this.TapHandler;
 		}
 
@@ -49,7 +49,7 @@ public class ShipInput : DSTools.MessengerListener
 		ScreenTransformGesture [] trans = this.cam.gameObject.GetComponents<ScreenTransformGesture>();
 		for (int i=0; i<trans.Length; i++)
 		{
-			Debug.LogError("ShipInput ScreenTransformGesture=" + trans[i].name);
+			//Debug.LogError("ShipInput ScreenTransformGesture=" + trans[i].name);
 			trans[i].Transformed += this.TransformedHandler;
 			trans[i].TransformCompleted += this.TransformCompletedHandler;
 		}

@@ -89,24 +89,42 @@ public class ShipLeader : MonoBehaviour
 	public void SetSplineGroup(SplineGroup group)
 	{
 		this.splineGroup = group;
-		this.splineGroup.SetGroup(this);
+		this.spline = group.GetClosestSpline(this.transform.position);
+		//Debug.LogError("SetSplineGroup " + this.name + " spline=" + spline);
 	}
 
-	public void MoveSpline(FluffyUnderware.Curvy.CurvySpline spline_)
+	public void MoveSpline(FluffyUnderware.Curvy.CurvySpline spline_ = null)
 	{
-		if (this.speed == 0)
+		if (spline_ != null)
+		{
+			this.spline = spline_;
+		}
+
+		if ((this.speed == 0) || (this.controller == null) || (this.spline == null))
 		{
 			return;
 		}
 
-		this.spline = spline_;
+		//Debug.LogError("MoveSpline " + this.name + " spline=" + this.spline.name + " speed=" + this.speed);
 
 		Vector3 currentPos = this.transform.position;
 		Vector3 nearestPoint;
 		float nearestT = this.spline.GetNearestPointTF(currentPos, out nearestPoint);
 
-		float duration = Vector3.Distance(currentPos, nearestPoint) / this.speed;
-		this.controller.SwitchTo(this.spline, nearestT, duration);
+		if (this.controller.Spline != null)
+		{
+			float duration = Vector3.Distance(currentPos, nearestPoint) / this.speed;
+			this.controller.SwitchTo(this.spline, nearestT, duration);
+		}
+		else
+		{
+			this.controller.Spline = this.spline;
+			this.controller.InitialPosition = Mathf.Max(nearestT, 0.001f);
+		}
+
+		//Debug.LogError("       currentPos=" + currentPos.ToString() + " nearestPoint=" + nearestPoint.ToString() + " nearestT=" + nearestT);
+
+		this.controller.Play();
 	}
 
 	public void MovePath(List<Vector3> points, bool loop = false)
@@ -211,7 +229,7 @@ public class ShipLeader : MonoBehaviour
 
 	public bool IsMoving()
 	{
-		return (this.currentPath != null);
+		return (this.currentPath != null) || ((this.controller != null) && (this.controller.IsPlaying));
 	}
 
 	public void DestroyPath()

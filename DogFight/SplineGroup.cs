@@ -36,18 +36,6 @@ public class SplineGroup : MonoBehaviour
 	
 	}
 
-	public FluffyUnderware.Curvy.CurvySpline SetGroup(ShipLeader ship)
-	{
-		Vector3 shipPos = ship.transform.position;
-		FluffyUnderware.Curvy.CurvySpline spline = GetClosestSpline(shipPos);
-		if (spline == null)
-		{
-			return null;
-		}
-
-		return spline;
-	}
-
 	public FluffyUnderware.Curvy.CurvySpline GetClosestSpline(Vector3 pos)
 	{
 		return splines[0];

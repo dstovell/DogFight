@@ -64,35 +64,7 @@ public class Team : MonoBehaviour
 
 		ship.Pilot = isHuman ? ShipController.PilotType.Human : ShipController.PilotType.AI;
 
-		if (isHuman)
-		{
-			GameObject lookAt = null;
-			foreach(Transform child in obj.transform)
-			{
-            	if(child.tag == "CameraLookAt")
-            	{
-					lookAt = child.gameObject;
-					break;
-            	}
-            }
-
-			KGFOrbitCam orbitCam = Camera.main.GetComponent<KGFOrbitCam>();
-			if (orbitCam != null)
-			{
-				orbitCam.SetTarget(obj);
-				if (lookAt != null)
-				{
-					orbitCam.itsLookat.itsEnable = true;
-					orbitCam.SetLookatTarget(lookAt);
-				}
-			}
-
-			if (this.HUD != null)
-			{
-				this.HUD.CreateHud(ship, lookAt);
-			}
-		}
-		else if (!this.IsHumanTeam())
+		if (!this.IsHumanTeam())
 		{
 			if (this.HUD != null)
 			{
@@ -100,7 +72,18 @@ public class Team : MonoBehaviour
 			}
 		}
 
-		Arena.Instance.AssignSpawn(ship);
+		AssignSplineGroup(ship);
+	}
+
+	public SplineGroup AssignSplineGroup(ShipController ship)
+	{
+		SplineGroup splineGroup = SplineGroup.GetNewGroup(ship.Leader);
+		//Debug.LogError("AssignSplineGroup " + ship.Leader.name + " splineGroup=" + splineGroup);
+
+		ship.Leader.SetSplineGroup(splineGroup);
+		ship.Warp(ship.transform);
+
+		return splineGroup;
 	}
 }
 

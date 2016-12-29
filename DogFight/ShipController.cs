@@ -45,6 +45,20 @@ public class ShipController : MessengerListener
 	}
 	public RotateMode rotateMode = RotateMode.Idle;
 
+	public enum MoveMode
+	{
+		Idle,
+		Launching,
+		Warping,
+		Coasting,
+		FreeNav,
+		SplineNav
+	}
+	public MoveMode moveMode = MoveMode.Idle;
+
+	public GameObject [] FreeNavWaypoints;
+	private int FreeNavWaypointIndex = -1;
+
 	public float MoveSpeed = 1f;
 	public float RotateSpeed = 1f;
 	public float DesiredLeaderDist = 5f;
@@ -58,8 +72,11 @@ public class ShipController : MessengerListener
 
 	public GameObject [] Thrusters;
 
-	private Vector3 currentMoveFrom;
-	private Vector3 currentMoveTo;
+	public float WarpDistance = 1000;
+	public float WarpDuration = 3f;
+	private float WarpTime = 3f;
+	private Vector3 WarpFrom;
+	private Vector3 WarpTo;
 
 	private bool changingPath = false;
 	private Vector3 pathMergePoint;
@@ -78,6 +95,8 @@ public class ShipController : MessengerListener
 
 	private Damageable damagable;
 	private Rigidbody rb;
+
+	public HudController HUD;
 
 	private Vector3 coastVector;
 	private bool isCoasting = false;
@@ -122,17 +141,21 @@ public class ShipController : MessengerListener
 	{
 		this.InitMessenger("ShipController");
 
-		this.Leader.gameObject.name = this.gameObject.name + "_Leader";
-		this.Leader.gameObject.transform.SetParent(null);
-		this.Leader.SetSpeed(this.MoveSpeed);
-
 		if (this.Rotator != null)
 		{
 			this.StartRotate = this.Rotator.transform.localRotation.z;
 			this.CurrentRotate = this.StartRotate;
 		}
+	}
 
-		this.LoadWeapon(this.PrimaryWeapon);
+	public void EjectLeader()
+	{
+		if (this.Leader.gameObject.transform.parent != null)
+		{
+			this.Leader.gameObject.name = this.gameObject.name + "_Leader";
+			this.Leader.gameObject.transform.SetParent(null);
+			this.Leader.SetSpeed(this.MoveSpeed);
+		}
 	}
 
 	public void LoadWeapon(ShipWeapon weapon)
@@ -151,14 +174,123 @@ public class ShipController : MessengerListener
 		this.LoadedWeapon = weapon;
 	}
 
+	public GameObject GetCameraLookAt()
+	{
+		foreach(Transform child in this.transform)
+		{
+        	if(child.tag == "CameraLookAt")
+        	{
+				return child.gameObject;
+				break;
+        	}
+        }
+        return null;
+	}
+
+	public void SetupCamera()
+	{
+		GameObject lookAt = GetCameraLookAt();
+		KGFOrbitCam orbitCam = Camera.main.GetComponent<KGFOrbitCam>();
+		if (orbitCam != null)
+		{
+			orbitCam.SetTarget(this.gameObject);
+			if (lookAt != null)
+			{
+				orbitCam.itsLookat.itsEnable = true;
+				orbitCam.SetLookatTarget(lookAt);
+			}
+		}
+	}
+
+	public void SetupHUD()
+	{
+		HudController hud = HudController.Instance;
+		if (hud != null)
+		{
+			GameObject lookAt = GetCameraLookAt();
+			hud.CreateHud(this, lookAt);
+		}
+	}
+
 	private IEnumerator CoastForSeconds(float secs) 
 	{
 		this.coastVector = this.transform.forward;
-		this.isCoasting = true;
+		MoveMode previousMode = this.moveMode;
+		this.moveMode = MoveMode.Coasting;
 		yield return new WaitForSeconds(secs);
 
-		this.isCoasting = false;
+		this.moveMode = previousMode;
  	}
+
+	public void Launch() 
+	{
+		this.Leader.SetSpeed(this.MoveSpeed);
+		StartCoroutine(Launch(5f));
+	}
+
+	public void Warp(Transform to) 
+	{
+		this.Leader.SetSpeed(this.MoveSpeed);
+
+		this.moveMode = MoveMode.Warping;
+		this.WarpTo = to.position;
+		this.WarpFrom = this.WarpTo - this.WarpDistance * to.transform.forward;
+		this.WarpTime = 0f;
+
+		this.transform.position = this.WarpFrom;
+		this.transform.rotation = this.transform.rotation;
+	}
+
+	private IEnumerator EnableForBattleIn(float secs)
+	{
+		EjectLeader();
+		this.moveMode = MoveMode.SplineNav;
+
+		yield return new WaitForSeconds(secs);
+
+		this.LoadWeapon(this.PrimaryWeapon);
+
+		if (this.Pilot == PilotType.Human)
+		{
+			SetupCamera();
+			SetupHUD();
+		}
+	}
+
+	public void EnableForBattle()
+	{
+		EjectLeader();
+		this.moveMode = MoveMode.SplineNav;
+
+		this.LoadWeapon(this.PrimaryWeapon);
+
+		if (this.Pilot == PilotType.Human)
+		{
+			SetupCamera();
+			SetupHUD();
+		}
+	}
+
+	public void EnableForFreeNav()
+	{
+		EjectLeader();
+		this.moveMode = MoveMode.FreeNav;
+	}
+
+	private IEnumerator Launch(float secs) 
+	{
+		this.currentSpeed = this.MoveSpeed;
+		yield return StartCoroutine( CoastForSeconds(secs) );
+
+		if (this.FreeNavWaypoints.Length > 0)
+		{
+			EnableForFreeNav();
+		}
+		else 
+		{
+			EnableForBattle();
+		}
+	}
 
 	void Update() 
 	{
@@ -174,7 +306,25 @@ public class ShipController : MessengerListener
 		Vector3 desiredDirection = (this.Leader.transform.position - this.transform.position).normalized;
 		Quaternion desiredRotation = Quaternion.LookRotation(desiredDirection);
 
-		if (this.isCoasting)
+		if (this.moveMode == MoveMode.Warping)
+		{
+			this.WarpTime += Time.deltaTime;
+
+			float t = this.WarpTime / this.WarpDuration;
+			t = Mathf.Min(t*t*t*t, 1f);
+
+			this.transform.position = Vector3.Lerp(this.WarpFrom, this.WarpTo, t);
+
+			if (t >= 1f)
+			{
+				StartCoroutine(EnableForBattleIn(1.0f));
+			}
+
+			this.UpdateThrusters();
+
+			return;
+		}
+		else if (this.moveMode == MoveMode.Coasting)
 		{
 			this.currentSpeed *= 1.02f;
 			this.transform.position += this.coastVector * this.currentSpeed * Time.deltaTime;
@@ -182,21 +332,43 @@ public class ShipController : MessengerListener
 			this.UpdateThrusters();
 			return;
 		}
-
-		if (this.Leader.IsAtDestination())
+		else if (this.moveMode == MoveMode.SplineNav)
 		{
-			this.Stop();
-			Vector3 otherSide = this.Spawn.GetFurthestEnd(this.Leader.transform.position);
-			this.currentMoveFrom = this.Leader.transform.position;
-			this.currentMoveTo = otherSide;
-			this.StartCoroutine( this.CoastForSeconds(1.5f) );
-			return;
+			if (this.Leader.IsAtDestination())
+			{
+				this.Stop();
+				this.StartCoroutine( this.CoastForSeconds(1.5f) );
+				return;
+			}
+
+			if (!this.IsMoving())
+			{
+				this.Leader.MoveSpline();
+				return;
+			}
 		}
-
-		if (!this.IsMoving())
+		else if (this.moveMode == MoveMode.FreeNav)
 		{
-			this.ContinueCurrentMove();
-			return;
+			if (this.Leader.IsAtDestination())
+			{
+				this.Stop();
+				return;
+			}
+
+			if (!this.IsMoving())
+			{
+				if ((this.FreeNavWaypointIndex >= this.FreeNavWaypoints.Length) || (this.FreeNavWaypointIndex < 0))
+				{
+					this.FreeNavWaypointIndex = 0;
+				}
+				else
+				{
+					this.FreeNavWaypointIndex++;
+				}
+
+				GameObject nextPoint = this.FreeNavWaypoints[this.FreeNavWaypointIndex];
+				this.MoveToFreeNav(nextPoint.transform.position);
+			}
 		}
 
 		if (this.Leader.transform.position == this.transform.position)
@@ -232,18 +404,18 @@ public class ShipController : MessengerListener
 
 	private void UpdateThrusters()
 	{
-//		for (int i=0; i<this.Thrusters.Length; i++)
-//		{
-//			TrailRenderer trail = this.Thrusters[i].GetComponent<TrailRenderer>();
-//			if (this.isCoasting)
-//			{
-//				trail.time = Mathf.Max(0.0f, trail.time-0.01f);
-//			}
-//			else
-//			{
-//				trail.time = Mathf.Min(0.5f, trail.time+0.01f);
-//			}
-//		}
+		for (int i=0; i<this.Thrusters.Length; i++)
+		{
+			TrailRenderer trail = this.Thrusters[i].GetComponent<TrailRenderer>();
+			if (this.moveMode == MoveMode.Warping)
+			{
+				trail.time = 0.1f;
+			}
+			else
+			{
+				trail.time = 0.5f;
+			}
+		}
 	}
 
 	private void SetRotateMode(RotateMode m)
@@ -534,7 +706,17 @@ public class ShipController : MessengerListener
 		return this.damagable.IsDead();
 	}
 
-	public void MoveTo(Vector3 to)
+	public void MoveToFreeNav(Vector3 to)
+	{
+		StartMoveFreeNav(this.Leader.transform.position, to);
+	}
+
+	public void MovePathFreeNav(Vector3 from, Vector3 to)
+	{
+		StartMoveFreeNav(from, to);
+	}
+
+	private void StartMoveFreeNav(Vector3 from, Vector3 to)
 	{
 		if (this.isPathfinding)
 		{
@@ -542,38 +724,8 @@ public class ShipController : MessengerListener
 		}
 		this.isPathfinding = true;
 
-		this.currentMoveFrom = this.Leader.transform.position;
-		this.currentMoveTo = to;
-
-		this.ContinueCurrentMove();
-	}
-
-	public void MovePath(Vector3 from, Vector3 to)
-	{
-		if (this.isPathfinding)
-		{
-			return;
-		}
-		this.isPathfinding = true;
-
-		this.currentMoveFrom = from;
-		this.currentMoveTo = to;
-
-		this.ContinueCurrentMove();
-	}
-
-	private void ContinueCurrentMove()
-	{
-		this.Seeker.StartPath(this.currentMoveFrom, this.currentMoveTo, OnMovePathComplete);
-	}
-
-	private void ChangePath(Vector3 connectionPosition, Vector3 pathStart)
-	{
-		this.pathMergePoint = connectionPosition;
-		this.changingPath = true;
-
-		this.currentMoveFrom = pathStart;
-		this.ContinueCurrentMove();
+		Debug.LogError("StartMove " + from.ToString() + " -> " + to.ToString());
+		this.Seeker.StartPath(from, to, OnMovePathComplete);
 	}
 
 	private void OnMovePathComplete(Path p) 
@@ -620,16 +772,6 @@ public class ShipController : MessengerListener
 	public void Stop()
 	{
 		this.Leader.Stop();
-	}
-
-	public void FindPath(Vector3 from, Vector3 to)
-	{
-		this.Seeker.StartPath(from, to, OnPathComplete);
-	}
-
-	private void OnPathComplete (Path p) 
-	{
-		p.Claim(this);
 	}
 
 	private void HandleFlick(Vector2 flickVector)

@@ -134,14 +134,14 @@ public class Arena : MonoBehaviour {
 					Vector3 lookDir = Vector3.forward;
 					ship.transform.position = spawn.HumanEnd.transform.position - initialSpawnSeperation*lookDir;
 					ship.transform.rotation = Quaternion.LookRotation(lookDir);
-					ship.MoveTo(spawn.AIEnd.transform.position);
+					ship.MoveToFreeNav(spawn.AIEnd.transform.position);
 				}
 				else
 				{
 					Vector3 lookDir = -1*Vector3.forward;
 					ship.transform.position = spawn.AIEnd.transform.position - initialSpawnSeperation*lookDir;
 					ship.transform.rotation = Quaternion.LookRotation(lookDir);
-					ship.MoveTo(spawn.HumanEnd.transform.position);
+					ship.MoveToFreeNav(spawn.HumanEnd.transform.position);
 				}
 				return true;
 			}
@@ -171,12 +171,12 @@ public class Arena : MonoBehaviour {
 		this.AddSpawn(humanCenter+seperationVector, aiCenter+seperationVector);
 		this.AddSpawn(humanCenter-seperationVector, aiCenter-seperationVector);
 			
-		GameObject asteroidContainer = new GameObject("Asteroids");
-		asteroidContainer.transform.SetParent(this.transform);
-		for (int a=0; a<this.AsteroidSpawnCount; a++)
-		{
-			this.SpawnRandomAsteroid(navPointPositions, asteroidContainer);
-		}
+//		GameObject asteroidContainer = new GameObject("Asteroids");
+//		asteroidContainer.transform.SetParent(this.transform);
+//		for (int a=0; a<this.AsteroidSpawnCount; a++)
+//		{
+//			this.SpawnRandomAsteroid(navPointPositions, asteroidContainer);
+//		}
 
 		for (int n=0; n<navPointPositions.Count; n++)
 		{

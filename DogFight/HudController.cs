@@ -8,6 +8,8 @@ namespace DogFight
 
 public class HudController : MonoBehaviour
 {
+	static public HudController Instance;
+
 	public GameObject ReticlePrefab;
 	public GameObject TargetPrefab;
 	public GameObject DirectionPrefab;
@@ -44,6 +46,11 @@ public class HudController : MonoBehaviour
 		this.Targets.Add(tracker);
 	}
 
+	void Awake()
+	{
+		HudController.Instance = this;
+	}
+
 	void Start()
 	{
 		this.DirectionIndicators = new List<Image>();
@@ -72,7 +79,7 @@ public class HudController : MonoBehaviour
 	void Update ()
 	{
 		ShipController human = ShipController.GetHuman();
-		if (human == null)
+		if ((human == null) || (human.Reticle == null))
 		{
 			return;
 		}
