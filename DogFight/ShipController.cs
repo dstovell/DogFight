@@ -189,17 +189,7 @@ public class ShipController : MessengerListener
 
 	public void SetupCamera()
 	{
-		GameObject lookAt = GetCameraLookAt();
-		KGFOrbitCam orbitCam = Camera.main.GetComponent<KGFOrbitCam>();
-		if (orbitCam != null)
-		{
-			orbitCam.SetTarget(this.gameObject);
-			if (lookAt != null)
-			{
-				orbitCam.itsLookat.itsEnable = true;
-				orbitCam.SetLookatTarget(lookAt);
-			}
-		}
+		CameraManager.Instance.EnableFollowCam(this.gameObject, GetCameraLookAt());
 	}
 
 	public void SetupHUD()
@@ -252,6 +242,7 @@ public class ShipController : MessengerListener
 
 		if (this.Pilot == PilotType.Human)
 		{
+			ArenaPanel.DisableAll();
 			SetupCamera();
 			SetupHUD();
 		}
@@ -266,6 +257,7 @@ public class ShipController : MessengerListener
 
 		if (this.Pilot == PilotType.Human)
 		{
+			ArenaPanel.DisableAll();
 			SetupCamera();
 			SetupHUD();
 		}
@@ -317,7 +309,7 @@ public class ShipController : MessengerListener
 
 			if (t >= 1f)
 			{
-				StartCoroutine(EnableForBattleIn(1.0f));
+				//StartCoroutine(EnableForBattleIn(1.0f));
 			}
 
 			this.UpdateThrusters();

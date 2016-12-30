@@ -17,6 +17,10 @@ public class ShipInput : DSTools.MessengerListener
 		if (this.cam == null)
 		{
 			this.cam = Camera.main;
+			if (this.cam == null)
+			{
+				this.cam = this.gameObject.GetComponent<Camera>();
+			}
 		}
 	}
 
