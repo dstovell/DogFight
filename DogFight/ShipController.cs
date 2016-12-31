@@ -36,6 +36,7 @@ public class ShipController : MessengerListener
 		Human
 	}
 	public PilotType Pilot = PilotType.AI;
+	public FactionType Faction = FactionType.Alliance;
 
 	public enum RotateMode
 	{
@@ -98,6 +99,9 @@ public class ShipController : MessengerListener
 
 	public HudController HUD;
 
+	public Animator [] HangerDoors;
+	private bool hangerOpen = false;
+
 	private Vector3 coastVector;
 	private bool isCoasting = false;
 	private float currentSpeed = 0f;
@@ -121,6 +125,15 @@ public class ShipController : MessengerListener
 			}
 		}
 		return null;
+	}
+
+	public static void LaunchAll()
+	{
+		//Debug.LogError("LaunchAll ships=" + Ships.Count );
+		for (int i=0; i<ShipController.Ships.Count; i++)
+		{
+			ShipController.Ships[i].LaunchHanger();
+		}
 	}
 
 	void Awake()
@@ -148,9 +161,14 @@ public class ShipController : MessengerListener
 		}
 	}
 
+	public bool IsLeaderEjected()
+	{
+		return (this.Leader.gameObject.transform.parent == null);
+	}
+
 	public void EjectLeader()
 	{
-		if (this.Leader.gameObject.transform.parent != null)
+		if (!IsLeaderEjected())
 		{
 			this.Leader.gameObject.name = this.gameObject.name + "_Leader";
 			this.Leader.gameObject.transform.SetParent(null);
@@ -212,10 +230,78 @@ public class ShipController : MessengerListener
 		this.moveMode = previousMode;
  	}
 
+	private void OpenHanger()
+	{
+		//Debug.LogError("OpenHanger this.hangerOpen=" + this.hangerOpen);
+		if (!this.hangerOpen)
+		{
+			for (int i=0; i<this.HangerDoors.Length; i++)
+			{
+				this.HangerDoors[i].SetBool("Open", true);
+			}
+
+			if (this.HangerDoors.Length > 0)
+			{
+				this.hangerOpen = true;
+			}
+		}
+	}
+
+	private void CloseHanger()
+	{
+		//Debug.LogError("CloseHanger this.hangerOpen=" + this.hangerOpen);
+		if (this.hangerOpen)
+		{
+			for (int i=0; i<this.HangerDoors.Length; i++)
+			{
+				this.HangerDoors[i].SetBool("Open", false);
+			}
+
+			if (this.HangerDoors.Length > 0)
+			{
+				this.hangerOpen = false;
+			}
+		}
+	}
+
+	public void LaunchHanger()
+	{
+		//Debug.LogError("LaunchHanger");
+		StartCoroutine(LaunchHangerInternal());
+	}
+
+	private IEnumerator LaunchHangerInternal()
+	{
+		//Debug.LogError("LaunchHangerInternal");
+
+		if (this.Rotator != null)
+		{
+			if (!this.hangerOpen)
+			{
+				this.OpenHanger();
+
+				//Wait for hanger door animation to finish
+				yield return new WaitForSeconds(2f);
+			}
+
+			ShipController [] ships = this.Rotator.GetComponentsInChildren<ShipController>();
+			//Debug.LogError("LaunchHanger ships=" + ships.Length);
+			for (int i=0; i<ships.Length; i++)
+			{
+				ShipController ship = ships[i];
+				ship.gameObject.transform.SetParent(null);
+				ship.Launch();
+			}
+
+			//Wait to close hanger door
+			yield return new WaitForSeconds(4f);
+			this.CloseHanger();
+		}
+	}
+
 	public void Launch() 
 	{
-		this.Leader.SetSpeed(this.MoveSpeed);
-		StartCoroutine(Launch(5f));
+		StartCoroutine(Launch(0.5f));
 	}
 
 	public void Warp(Transform to) 
@@ -236,7 +322,10 @@ public class ShipController : MessengerListener
 		EjectLeader();
 		this.moveMode = MoveMode.SplineNav;
 
-		yield return new WaitForSeconds(secs);
+		SplineGroup splineGroup = SplineGroup.GetNewGroup(this.Leader);
+		this.Leader.SetSplineGroup(splineGroup);
+
+		if (secs > 0f) yield return new WaitForSeconds(secs);
 
 		this.LoadWeapon(this.PrimaryWeapon);
 
@@ -250,17 +339,7 @@ public class ShipController : MessengerListener
 
 	public void EnableForBattle()
 	{
-		EjectLeader();
-		this.moveMode = MoveMode.SplineNav;
-
-		this.LoadWeapon(this.PrimaryWeapon);
-
-		if (this.Pilot == PilotType.Human)
-		{
-			ArenaPanel.DisableAll();
-			SetupCamera();
-			SetupHUD();
-		}
+		StartCoroutine(EnableForBattleIn(0f));
 	}
 
 	public void EnableForFreeNav()
@@ -272,6 +351,7 @@ public class ShipController : MessengerListener
 	private IEnumerator Launch(float secs) 
 	{
 		this.currentSpeed = this.MoveSpeed;
+		this.Leader.SetSpeed(this.MoveSpeed);
 		yield return StartCoroutine( CoastForSeconds(secs) );
 
 		if (this.FreeNavWaypoints.Length > 0)
@@ -294,9 +374,6 @@ public class ShipController : MessengerListener
 			this.transform.position += this.transform.forward * deadSpeed * Time.deltaTime;
 			return;
 		}
-
-		Vector3 desiredDirection = (this.Leader.transform.position - this.transform.position).normalized;
-		Quaternion desiredRotation = Quaternion.LookRotation(desiredDirection);
 
 		if (this.moveMode == MoveMode.Warping)
 		{
@@ -324,7 +401,16 @@ public class ShipController : MessengerListener
 			this.UpdateThrusters();
 			return;
 		}
-		else if (this.moveMode == MoveMode.SplineNav)
+
+		if (!this.IsLeaderEjected())
+		{
+			return;
+		}
+
+		Vector3 desiredDirection = (this.Leader.transform.position - this.transform.position).normalized;
+		Quaternion desiredRotation = Quaternion.LookRotation(desiredDirection);
+
+		if (this.moveMode == MoveMode.SplineNav)
 		{
 			if (this.Leader.IsAtDestination())
 			{
@@ -496,7 +582,7 @@ public class ShipController : MessengerListener
 		for (int i=0; i<ShipController.Ships.Count; i++)
 		{
 			ShipController ship = ShipController.Ships[i];
-			if ((ship == null) || (ship == this))
+			if ((ship == null) || !FactionController.Instance.IsHostile(this.Faction, ship.Faction))
 			{
 				continue;
 			}
