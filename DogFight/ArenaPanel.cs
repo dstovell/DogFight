@@ -7,10 +7,13 @@ namespace DogFight
 
 public class ArenaPanel : MonoBehaviour
 {
+	public GameObject ActionTarget;
 
 	public float WarpInDelay = 0f;
 	public float WarpInFrame = -1;
-	public GameObject WarpIn;
+
+	public float HangerOpenDelay = 0f;
+	public float HangerOpenFrame = -1;
 
 	public float LaunchDelay = 0f;
 	public float LaunchAllFrame = -1;
@@ -76,35 +79,39 @@ public class ArenaPanel : MonoBehaviour
 	{
 		//Debug.LogError("OnTargetStepChanged oldStep=" + oldStep + " newStep=" + newStep);
 		HandleWarpIn(oldStep, newStep);
+		HandleOpenHanger(oldStep, newStep);
 		HandleLaunch(oldStep, newStep);
 	}
 
 	void HandleWarpIn(int oldStep, int newStep)
 	{
-		if ((this.WarpIn != null) && (this.WarpInFrame == newStep))
+		if ((this.ActionTarget != null) && (this.WarpInFrame == newStep))
 		{
-			Opertoon.Panoply.CameraState camState = (this.panel.CurrentCameraState() != null) ? this.panel.CurrentCameraState() : this.panel.NextCameraState();
-
-			Vector3 lookAt = camState.lookAt;
-			GameObject obj = GameObject.Instantiate(this.WarpIn, lookAt, Quaternion.identity) as GameObject;
-			if (obj != null)
-			{
-				ShipController ship = obj.GetComponent<ShipController>();
-				if (ship == null)
-				{
-					GameObject.Destroy(obj);
-					Debug.LogError("WarpIn no Ship");
-					return;
-				}
-
-				//Debug.LogError("WarpIn pos=" + obj.transform.position);
-
-				ship.Warp(obj.transform);
-			}
-
-			this.WarpIn = null;
+			StartCoroutine(WarpIn(this.WarpInDelay));
 		}
 	}
+
+	private IEnumerator WarpIn(float secs)
+    {
+		//Debug.LogError("WarpIn secs=" + secs );
+		if (secs != 0) yield return new WaitForSeconds(secs);
+
+		Opertoon.Panoply.CameraState camState = (this.panel.CurrentCameraState() != null) ? this.panel.CurrentCameraState() : this.panel.NextCameraState();
+
+		this.ActionTarget.transform.SetParent(null);
+
+		Vector3 lookAt = camState.lookAt;
+		this.ActionTarget.transform.position = lookAt;
+		//this.ActionTarget.transform.rotation = Quaternion.identity;				
+
+		ShipController ship = this.ActionTarget.GetComponent<ShipController>();
+		if (ship != null)
+		{
+			ship.Warp(this.ActionTarget.transform);
+		}
+
+		this.ActionTarget = null;
+    }
 
 	void HandleLaunch(int oldStep, int newStep)
 	{
@@ -128,13 +135,43 @@ public class ArenaPanel : MonoBehaviour
 		ShipController.LaunchAll();
     }
 
+	void HandleOpenHanger(int oldStep, int newStep)
+	{
+		if (this.HangerOpenFrame >= 0)
+		{
+			if (this.HangerOpenFrame == newStep)
+			{
+				StartCoroutine(OpenAllHangers(this.HangerOpenDelay));
+
+				this.HangerOpenFrame = -1;
+			}
+		}
+	}
+
+	private IEnumerator OpenAllHangers(float secs)
+    {
+		//Debug.LogError("LaunchAll secs=" + secs );
+		if (secs != 0) yield return new WaitForSeconds(secs);
+		ShipController.OpenAllHangers();
+    }
+
 	public void EnablePanel()
 	{
+		if (this.gameObject.tag == "MainCamera")
+		{
+			return;
+		}
+
 		this.gameObject.SetActive(true);
 	}
 
 	public void DisablePanel()
 	{
+		if (this.gameObject.tag == "MainCamera")
+		{
+			return;
+		}
+
 		this.gameObject.SetActive(false);
 	}
 }

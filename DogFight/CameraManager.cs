@@ -11,6 +11,7 @@ public class CameraManager : MessengerListener
 
 	public Camera Cam;
 	public KGFOrbitCamSettings FollowCam;
+	public Opertoon.Panoply.Panel panel;
 
 	public Camera GetCamera()
 	{
@@ -26,6 +27,7 @@ public class CameraManager : MessengerListener
 	{
 		if (this.FollowCam != null)
 		{
+			this.panel.enabled = false;
 			GetCamera().enabled = true;
 			KGFOrbitCam orbitCam = this.GetOrbitCamera();
 			orbitCam.gameObject.tag = "MainCamera";

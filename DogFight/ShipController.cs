@@ -127,6 +127,15 @@ public class ShipController : MessengerListener
 		return null;
 	}
 
+	public static void OpenAllHangers()
+	{
+		//Debug.LogError("OpenAllHangers ships=" + Ships.Count );
+		for (int i=0; i<ShipController.Ships.Count; i++)
+		{
+			ShipController.Ships[i].OpenHanger();
+		}
+	}
+
 	public static void LaunchAll()
 	{
 		//Debug.LogError("LaunchAll ships=" + Ships.Count );
