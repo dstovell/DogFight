@@ -1,17 +1,46 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace DogFight
 {
 
 public class Damageable : MonoBehaviour
 {
+	static public List<Damageable> Damageables = new List<Damageable>();
+
+	public enum Type
+	{
+		Hull,
+		Bridge,
+		Turret,
+		Hanger,
+		Engine
+	}
+	public Type ComponentType = Type.Hull;
+
 	private bool isAlive = true;
 
 	public float Health = 1f;
 	public GameObject DeathFxPrefab;
 	public bool DestroyOnDeath = true;
 	public float DestroyWaitSeconds = 0f;
+
+	void Awake()
+	{
+		Damageable.Damageables.Add(this);
+	}
+
+	void OnDestroy()
+	{
+		Damageable.Damageables.Remove(this);
+	}
+
+	public FactionType GetFaction()
+	{
+		Combatant combat = this.transform.root.gameObject.GetComponent<Combatant>();
+		return (combat != null) ? combat.Faction : FactionType.Alliance;
+	}
 
 	public bool IsDead()
 	{
@@ -52,6 +81,11 @@ public class Damageable : MonoBehaviour
 			GameObject.Destroy(this.gameObject);
 		}
  	}
+
+	public void OnTriggerEnter(Collider other)
+	{
+		Debug.LogError("OnTriggerEnter " + this.transform.parent.gameObject.name + " hit " + other.gameObject.name );
+	}
 }
 
 }

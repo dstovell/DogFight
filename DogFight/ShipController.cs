@@ -26,17 +26,9 @@ public class AvailableMove
 	public Vector3 connectionPosition;
 }
 
-public class ShipController : MessengerListener
+public class ShipController : Combatant
 {
 	static public List<ShipController> Ships = new List<ShipController>();
-
-	public enum PilotType
-	{
-		AI,
-		Human
-	}
-	public PilotType Pilot = PilotType.AI;
-	public FactionType Faction = FactionType.Alliance;
 
 	public enum RotateMode
 	{
@@ -84,17 +76,12 @@ public class ShipController : MessengerListener
 
 	public ArenaSpawn Spawn;
 
-	public bool AutoFiring = false;
-
 	public SpriteObjectTracker Reticle;
-
-	public ShipWeapon LoadedWeapon;
 
 	public ShipWeapon PrimaryWeapon;
 
 	public List<ShipController> HostileShips = new List<ShipController>();
 
-	private Damageable damagable;
 	private Rigidbody rb;
 
 	public HudController HUD;
@@ -150,7 +137,6 @@ public class ShipController : MessengerListener
 		ShipController.Ships.Add(this);
 
 		this.rb = this.gameObject.GetComponent<Rigidbody>();
-		this.damagable = this.gameObject.GetComponent<Damageable>();
 	}
 
 	void OnDestroy()
@@ -241,7 +227,7 @@ public class ShipController : MessengerListener
 
 	private void OpenHanger()
 	{
-		//Debug.LogError("OpenHanger this.hangerOpen=" + this.hangerOpen);
+		//Debug.LogError("OpenHanger " + this.name + " this.hangerOpen=" + this.hangerOpen);
 		if (!this.hangerOpen)
 		{
 			for (int i=0; i<this.HangerDoors.Length; i++)
@@ -281,7 +267,7 @@ public class ShipController : MessengerListener
 
 	private IEnumerator LaunchHangerInternal()
 	{
-		//Debug.LogError("LaunchHangerInternal");
+		//Debug.LogError("LaunchHangerInternal" + this.name);
 
 		if (this.Rotator != null)
 		{
@@ -586,53 +572,6 @@ public class ShipController : MessengerListener
 		}
 	}
 
-	private void ScanForHostiles()
-	{
-		for (int i=0; i<ShipController.Ships.Count; i++)
-		{
-			ShipController ship = ShipController.Ships[i];
-			if ((ship == null) || !FactionController.Instance.IsHostile(this.Faction, ship.Faction))
-			{
-				continue;
-			}
-
-			if (!this.HostileShips.Contains(ship))
-			{
-				this.HostileShips.Add(ship);
-			}
-		}
-	}
-
-	private void UpdateWeapons()
-	{
-		if (this.LoadedWeapon == null)
-		{
-			return;
-		}
-
-		if (this.AutoFiring)
-		{
-			for (int i=0; i<this.HostileShips.Count; i++)
-			{
-				ShipController hostile = this.HostileShips[i];
-				if (hostile == null)
-				{
-					continue;
-				}
-				bool isFiring = this.IsFiring(this.LoadedWeapon);
-				bool inFireArc = this.IsInFireArc(this.LoadedWeapon, hostile.gameObject);
-				if (!isFiring && inFireArc)
-				{
-					this.FireAt(this.LoadedWeapon, hostile.gameObject);
-				}
-				else if (isFiring && !inFireArc)
-				{
-					this.StopFiring(this.LoadedWeapon);
-				}
-			}
-		}
-	}
-
 	public List<Vector3> GetAvailableMoveDirections()
 	{
 		return this.Leader.GetChangeSplineDirections();
@@ -697,87 +636,6 @@ public class ShipController : MessengerListener
 		return node;
 	}
 
-	public bool IsInFireArc(ShipWeapon weapon, GameObject target)
-	{
-		if (weapon == null)
-		{
-			return false;
-		}
-
-		return weapon.IsInFireArc(target, this.transform);
-	}
-
-	public void FireAt(ShipWeapon weapon, GameObject target)
-	{
-		if (weapon == null)
-		{
-			return;
-		}
-
-		weapon.FireAt(target);
-	}
-
-	public void FireAt(Vector2 screenPoint)
-	{
-		if (this.LoadedWeapon == null)
-		{
-			return;
-		}
-
-		float screenDistance = 9999f;
-		GameObject target = null;
-		for (int i=0; i<this.HostileShips.Count; i++)
-		{
-			ShipController hostile = this.HostileShips[i];
-			if (hostile == null)
-			{
-				continue;
-			}
-			bool inFireArc = this.IsInFireArc(this.LoadedWeapon, hostile.gameObject);
-			if (inFireArc)
-			{
-				Vector3 screenPos = Camera.main.WorldToViewportPoint(hostile.transform.position);
-				float dist = Vector3.Distance(screenPos, screenPoint);
-				if (dist < screenDistance)
-				{
-					target = hostile.gameObject;
-				}
-			}
-		}
-
-		this.LoadedWeapon.FireAt(target);
-	}
-
-	public bool IsFiring(ShipWeapon weapon)
-	{
-		if (weapon == null)
-		{
-			return false;
-		}
-
-		return weapon.IsFiring();
-	}
-
-	public void StopFiring(ShipWeapon weapon)
-	{
-		if (weapon == null)
-		{
-			return;
-		}
-
-		weapon.StopFiring();
-	}
-
-	public Vector3 GetReticleSize()
-	{
-		return (this.LoadedWeapon != null) ? this.LoadedWeapon.GetReticleSize() : Vector3.zero;
-	}
-
-	public bool IsFacing(Vector3 dir)
-	{
-		return (Vector3.Angle(this.transform.forward, dir) < 0.1);
-	}
-
 	public float GetSpeed()
 	{
 		return currentSpeed;
@@ -786,11 +644,6 @@ public class ShipController : MessengerListener
 	public bool IsMoving()
 	{
 		return this.Leader.IsMoving();
-	}
-
-	public bool IsDead()
-	{
-		return this.damagable.IsDead();
 	}
 
 	public void MoveToFreeNav(Vector3 to)
