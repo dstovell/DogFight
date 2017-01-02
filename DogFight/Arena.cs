@@ -96,7 +96,7 @@ public class Arena : MonoBehaviour {
 		int randomAsteroid = Random.Range(0, this.Asteroids.Length);
 
 		Quaternion randomRotation = Quaternion.Euler(Random.Range(0.0f, 360.0f), Random.Range(0.0f, 360.0f), Random.Range(0.0f, 360.0f));
-		float randomScale = Random.Range(0.3f, 1.0f);
+		float randomScale = Random.Range(0.5f, 3.0f);
 		//Squish upper size 1-(x-1)^2
 		GameObject asteroid = GameObject.Instantiate(this.Asteroids[randomAsteroid], possiblePositions[randomPosIndex], randomRotation) as GameObject;
 		asteroid.transform.localScale = new Vector3(randomScale, randomScale, randomScale);
@@ -163,13 +163,6 @@ public class Arena : MonoBehaviour {
 			Vector3 pos = new Vector3(centerX, centerY, i);
 			this.GenerateSegment(pos, navPointPositions);
 		}
-
-		Vector3 humanCenter = new Vector3(0f, 0f, -1.0f*this.ArenaCapLength);
-		Vector3 aiCenter = new Vector3(0f, 0f, this.ArenaLength - this.ArenaSegmentLength + this.ArenaCapLength);
-
-		Vector3 seperationVector = this.ArenaSegmentSpacing * Vector3.right;
-		this.AddSpawn(humanCenter+seperationVector, aiCenter+seperationVector);
-		this.AddSpawn(humanCenter-seperationVector, aiCenter-seperationVector);
 			
 //		GameObject asteroidContainer = new GameObject("Asteroids");
 //		asteroidContainer.transform.SetParent(this.transform);

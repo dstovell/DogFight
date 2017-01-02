@@ -70,6 +70,14 @@ public class ShipLeader : MonoBehaviour
 		}
 	}
 
+	public void UnPause()
+	{
+		if ((this.controller != null) && this.controller.IsPaused)
+		{		
+			this.controller.Play();
+		}
+	}
+
 	public void SetSpeed(float speed_)
 	{
 		this.speed = speed_;
@@ -119,7 +127,7 @@ public class ShipLeader : MonoBehaviour
 		else
 		{
 			this.controller.Spline = this.spline;
-			this.controller.InitialPosition = Mathf.Max(nearestT, 0.001f);
+			this.controller.InitialPosition = Mathf.Max(nearestT, 0.001f) + 0.01f;
 		}
 
 		//Debug.LogError("       currentPos=" + currentPos.ToString() + " nearestPoint=" + nearestPoint.ToString() + " nearestT=" + nearestT);

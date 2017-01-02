@@ -56,8 +56,12 @@ public class ShipController : Combatant
 	public float RotateSpeed = 1f;
 	public float DesiredLeaderDist = 5f;
 
-	public float IdleRotateSpeed = 1f;
+	public float IdleRotatorSpeed = 5f;
+	public float IdleRotatorReturnSpeed = 30f;
 	public float MaxIdleRotate = 20f;
+
+	public float TurnRotatorSpeed = 40f;
+	public float MaxTurnRotate = 20f;
 
 	public ShipLeader Leader;
 	public Seeker Seeker;
@@ -96,6 +100,7 @@ public class ShipController : Combatant
 	public float StartRotate = 0f;
 	public float GoalRotate = 0f;
 	public float CurrentRotate = 0f;
+	public float CurrentTurnY = 0f;
 
 	public bool RotateStarted = false;
 	private float NextIdleRotateDir = 1;
@@ -449,9 +454,11 @@ public class ShipController : Combatant
 			return;
 		}
 
+		Vector3 cross = Vector3.Cross(this.transform.rotation*Vector3.forward, desiredRotation*Vector3.forward);
+		this.CurrentTurnY = cross.y;
+
 		this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, desiredRotation, this.RotateSpeed*Time.deltaTime);
-		float turnAngleRemaining = Quaternion.Angle(this.transform.rotation, desiredRotation);
-		if (turnAngleRemaining < 0.1f)
+		if (!this.IsTurning())
 		{
 			this.SetRotateMode(RotateMode.Idle);
 		}
@@ -467,6 +474,10 @@ public class ShipController : Combatant
 		if (this.Leader.IsMoving() && (distanceToLeader > 1.5f*this.currentSpeed))
 		{
 			this.Leader.Pause(0.01f);
+		}
+		else
+		{
+			this.Leader.UnPause();
 		}
 
 		this.UpdateThrusters();
@@ -522,6 +533,12 @@ public class ShipController : Combatant
 		return (targetAngle == this.CurrentRotate);
 	}
 
+	public bool IsTurning()
+	{
+		float absY = Mathf.Abs(this.CurrentTurnY);
+		return (absY > 0.0035f);
+	}
+
 	private void UpdateRotator()
 	{
 		if (this.Rotator == null)
@@ -533,7 +550,7 @@ public class ShipController : Combatant
 		{
 			if (this.RotateStarted)
 			{
-				bool done = this.RotateTowards(this.GoalRotate, this.IdleRotateSpeed);
+				bool done = this.RotateTowards(this.GoalRotate, this.IdleRotatorSpeed);
 				if (done) 
 				{
 					this.GoalRotate = 0f;
@@ -542,7 +559,7 @@ public class ShipController : Combatant
 			}
 			else 
 			{
-				bool done = this.RotateTowards(this.StartRotate, this.IdleRotateSpeed);
+				bool done = this.RotateTowards(this.StartRotate, this.IdleRotatorReturnSpeed);
 				if (done) 
 				{
 					float minRotate = 0.2f;
@@ -559,7 +576,10 @@ public class ShipController : Combatant
 		{
 			if (this.RotateStarted)
 			{
-				bool done = this.RotateTowards(this.GoalRotate, this.RotateSpeed);
+				this.GoalRotate = this.CurrentTurnY * -5000f;
+				this.GoalRotate = Mathf.Clamp(this.GoalRotate, -1f*this.MaxTurnRotate, this.MaxTurnRotate);
+
+				bool done = this.RotateTowards(this.GoalRotate, this.TurnRotatorSpeed);
 				if (done) 
 				{
 					this.GoalRotate = 0f;

@@ -6,6 +6,7 @@ namespace DogFight
 
 public enum FactionType
 {
+	None,
 	Alliance,
 	Augments,
 	Pirate
@@ -23,6 +24,10 @@ public class FactionController : MonoBehaviour
 	public bool IsHostile(FactionType t1, FactionType t2)
 	{
 		if (t1 == t2)
+		{
+			return false;
+		}
+		else if ((t1 == FactionType.None) || (t2 == FactionType.None))
 		{
 			return false;
 		}

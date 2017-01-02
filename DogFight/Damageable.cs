@@ -62,7 +62,7 @@ public class Damageable : MonoBehaviour
 
 		if (!this.isAlive)
 		{
-			Debug.LogError(this.gameObject.name + " is dead!");
+			Debug.LogError(this.transform.root.gameObject.name + " is dead!");
 			this.StartCoroutine(this.OnDeath());
 		}
 	}
@@ -84,7 +84,7 @@ public class Damageable : MonoBehaviour
 
 	public void OnTriggerEnter(Collider other)
 	{
-		Debug.LogError("OnTriggerEnter " + this.transform.parent.gameObject.name + " hit " + other.gameObject.name );
+		Debug.LogError("OnTriggerEnter " + this.transform.root.gameObject.name + " hit " + other.gameObject.name );
 	}
 }
 

@@ -8,6 +8,14 @@ namespace DogFight
 
 public class Combatant : MessengerListener
 {
+	public enum Type
+	{
+		Assault,
+		Support,
+		Civilian
+	}
+	public Type CombatantType = Type.Assault;
+
 	public enum PilotType
 	{
 		AI,
