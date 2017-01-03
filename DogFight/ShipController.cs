@@ -84,8 +84,6 @@ public class ShipController : Combatant
 
 	public ShipWeapon PrimaryWeapon;
 
-	public List<ShipController> HostileShips = new List<ShipController>();
-
 	private Rigidbody rb;
 
 	public HudController HUD;
@@ -291,6 +289,8 @@ public class ShipController : Combatant
 				ShipController ship = ships[i];
 				ship.gameObject.transform.SetParent(null);
 				ship.Launch();
+
+				yield return new WaitForSeconds(2f);
 			}
 
 			//Wait to close hanger door
@@ -370,6 +370,7 @@ public class ShipController : Combatant
 		{
 			this.StopFiring(this.LoadedWeapon);
 			this.Stop();
+			this.UpdateThrusters();
 			float deadSpeed = 0.2f * this.MoveSpeed;
 			this.transform.position += this.transform.forward * deadSpeed * Time.deltaTime;
 			return;
@@ -407,8 +408,9 @@ public class ShipController : Combatant
 			return;
 		}
 
-		Vector3 desiredDirection = (this.Leader.transform.position - this.transform.position).normalized;
-		Quaternion desiredRotation = Quaternion.LookRotation(desiredDirection);
+		Vector3 targetPosition = this.Leader.GetTargetPosition();
+		Vector3 desiredDirection = (targetPosition - this.transform.position).normalized;
+		Quaternion desiredRotation = (desiredDirection != Vector3.zero) ? Quaternion.LookRotation(desiredDirection) : this.transform.rotation;
 
 		if (this.moveMode == MoveMode.SplineNav)
 		{
@@ -449,7 +451,7 @@ public class ShipController : Combatant
 			}
 		}
 
-		if (this.Leader.transform.position == this.transform.position)
+		if (targetPosition == this.transform.position)
 		{
 			return;
 		}
@@ -467,7 +469,7 @@ public class ShipController : Combatant
 			this.SetRotateMode(RotateMode.Turn);
 		}
 
-		float distanceToLeader = Vector3.Distance(this.transform.position, this.Leader.transform.position);
+		float distanceToLeader = Vector3.Distance(this.transform.position, this.Leader.GetTargetPosition());
 		this.currentSpeed = this.MoveSpeed * Mathf.Min(distanceToLeader/this.DesiredLeaderDist, 2.0f);
 		this.transform.position += this.transform.forward * this.currentSpeed * Time.deltaTime;
 
@@ -494,6 +496,10 @@ public class ShipController : Combatant
 			if (this.moveMode == MoveMode.Warping)
 			{
 				trail.time = 0.1f;
+			}
+			else if (this.IsDead())
+			{
+				trail.time = 0.0f;
 			}
 			else
 			{
@@ -668,7 +674,7 @@ public class ShipController : Combatant
 
 	public void MoveToFreeNav(Vector3 to)
 	{
-		StartMoveFreeNav(this.Leader.transform.position, to);
+		StartMoveFreeNav(this.Leader.GetTargetPosition(), to);
 	}
 
 	public void MovePathFreeNav(Vector3 from, Vector3 to)
@@ -734,7 +740,19 @@ public class ShipController : Combatant
 		this.Leader.Stop();
 	}
 
-	private void HandleFlick(Vector2 flickVector)
+	public override void HandleTransform(Vector2 deltaPos)
+	{
+		if (this.IsMoving())
+		{
+			if (this.moveMode == MoveMode.SplineNav)
+			{
+				Vector3 adjustment = 0.1f*deltaPos;
+				this.Leader.AdjustTargetPosition(adjustment);
+			}
+		}
+	}
+
+	public override void HandleFlick(Vector2 flickVector)
 	{
 		float maxAngle = 30;	
 
@@ -768,37 +786,6 @@ public class ShipController : Combatant
 	void OnCollisionEnter(Collision info)
 	{
 		//GameObject obj = info.collider.gameObject;
-	}
-
-	public override void OnMessage(string id, object obj1, object obj2)
-	{
-		if (this.Pilot != PilotType.Human)
-		{
-			return;
-		}
-
-		switch(id)
-		{
-		case "tap":
-		{
-			Vector2 screenPoint = (Vector2)obj1;
-			if (!this.AutoFiring)
-			{
-				this.FireAt(screenPoint);
-			}
-		}
-		break;
-
-		case "flick":
-		{
-			Vector2 flickVector = (Vector2)obj1;
-			this.HandleFlick(flickVector);
-		}
-		break;
-
-		default:
-			break;
-		}
 	}
 }
 

@@ -101,6 +101,34 @@ public class ShipLeader : MonoBehaviour
 		//Debug.LogError("SetSplineGroup " + this.name + " spline=" + spline);
 	}
 
+	public Vector3 TargetPositionOffset;
+	public Vector3 GetTargetPosition()
+	{
+		return this.transform.TransformPoint(this.TargetPositionOffset);
+	}
+
+	public void AdjustTargetPosition(Vector2 adjustTargetPos)
+	{
+		float maxRadius = 20f;
+
+		this.TargetPositionOffset.x += adjustTargetPos.x;
+		this.TargetPositionOffset.y += adjustTargetPos.y;
+		this.TargetPositionOffset.z = 0f;
+
+		this.TargetPositionOffset = Vector3.ClampMagnitude(this.TargetPositionOffset, maxRadius);
+	}
+
+	public IEnumerator EnablePathRender(float secs)
+	{
+		yield return new WaitForSeconds(secs);
+
+		TrailRenderer trail = this.GetComponentInChildren<TrailRenderer>();
+		if (trail != null)
+		{
+			trail.enabled = true;
+		}
+	}
+
 	public void MoveSpline(FluffyUnderware.Curvy.CurvySpline spline_ = null)
 	{
 		if (spline_ != null)
@@ -133,6 +161,8 @@ public class ShipLeader : MonoBehaviour
 		//Debug.LogError("       currentPos=" + currentPos.ToString() + " nearestPoint=" + nearestPoint.ToString() + " nearestT=" + nearestT);
 
 		this.controller.Play();
+
+		StartCoroutine(EnablePathRender(4f));
 	}
 
 	public void MovePath(List<Vector3> points, bool loop = false)
@@ -176,6 +206,7 @@ public class ShipLeader : MonoBehaviour
 		return this.splineGroup.GetChangeSplineDirections(this.spline, this.controller.Position);
 	}
 
+	//Debug this and make it work for spline movement
 	public bool IsAtDestination()
 	{
 		if ((this.currentPath == null) || (this.mover == null) || (this.mover.waypoints == null))

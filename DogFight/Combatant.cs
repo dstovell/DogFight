@@ -6,7 +6,7 @@ using DSTools;
 namespace DogFight
 {
 
-public class Combatant : MessengerListener
+public abstract class Combatant : MessengerListener
 {
 	public enum Type
 	{
@@ -125,6 +125,11 @@ public class Combatant : MessengerListener
 		return (Vector3.Angle(this.transform.forward, dir) < 0.1);
 	}
 
+	private static bool IsDamageableDead(Damageable damageable)
+    {
+        return damageable.IsDead();
+    }
+
 	protected void ScanForHostiles()
 	{
 		for (int i=0; i<Damageable.Damageables.Count; i++)
@@ -140,6 +145,8 @@ public class Combatant : MessengerListener
 				this.Hostiles.Add(d);
 			}
 		}
+
+		this.Hostiles.RemoveAll(this.IsDamageableDead);
 	}
 
 	protected void UpdateWeapons()
@@ -169,6 +176,45 @@ public class Combatant : MessengerListener
 					this.StopFiring(this.LoadedWeapon);
 				}
 			}
+		}
+	}
+
+	public void HandleTap(Vector2 screenPoint)
+	{
+		if (!this.AutoFiring)
+		{
+			this.FireAt(screenPoint);
+		}
+	}
+
+	public abstract void HandleTransform(Vector2 deltaPos);
+	public abstract void HandleFlick(Vector2 flickVector);
+
+	public override void OnMessage(string id, object obj1, object obj2)
+	{
+		if (this.Pilot != PilotType.Human)
+		{
+			return;
+		}
+
+		switch(id)
+		{
+		case "tap":
+		{
+			Vector2 screenPoint = (Vector2)obj1;
+			this.HandleTap(screenPoint);
+		}
+		break;
+
+		case "flick":
+		{
+			Vector2 flickVector = (Vector2)obj1;
+			this.HandleFlick(flickVector);
+		}
+		break;
+
+		default:
+			break;
 		}
 	}
 }

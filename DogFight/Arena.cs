@@ -182,30 +182,30 @@ public class Arena : MonoBehaviour {
 		AstarPath.active.astarData.pointGraph.maxDistance = zMaxDist;
 		AstarPath.active.Scan();
 
-		AstarPath.RegisterSafeUpdate (() => {
-			PointGraph graph = AstarPath.active.astarData.pointGraph;
-			for (int i=0; i<graph.nodes.Length; i++)
-			{
-				PointNode node = graph.nodes[i];
-				if (node != null)
-				{
-					List<GraphNode> connsToRemove = new List<GraphNode>();
-					for (int j=0; j<node.connections.Length; j++)
-					{
-						GraphNode n = node.connections[j];
-						if (n.position.z == node.position.z)
-						{
-							connsToRemove.Add(n);
-						}
-					}
-
-					for (int j=0; j<connsToRemove.Count; j++)
-					{
-						node.RemoveConnection(connsToRemove[j]);
-					}
-				}
-			}
-		});
+//		AstarPath.RegisterSafeUpdate (() => {
+//			PointGraph graph = AstarPath.active.astarData.pointGraph;
+//			for (int i=0; i<graph.nodes.Length; i++)
+//			{
+//				PointNode node = graph.nodes[i];
+//				if (node != null)
+//				{
+//					List<GraphNode> connsToRemove = new List<GraphNode>();
+//					for (int j=0; j<node.connections.Length; j++)
+//					{
+//						GraphNode n = node.connections[j];
+//						if (n.position.z == node.position.z)
+//						{
+//							connsToRemove.Add(n);
+//						}
+//					}
+//
+//					for (int j=0; j<connsToRemove.Count; j++)
+//					{
+//						node.RemoveConnection(connsToRemove[j]);
+//					}
+//				}
+//			}
+//		});
 	}
 }
 

@@ -12,6 +12,8 @@ public class ShipInput : DSTools.MessengerListener
 {
 	public Camera cam;
 
+	private Combatant Human;
+
 	void Awake()
 	{
 		if (this.cam == null)
@@ -27,6 +29,7 @@ public class ShipInput : DSTools.MessengerListener
 	void Start()
 	{
 		this.InitMessenger("ShipInput");
+		this.Human = ShipController.GetHuman();
 	}
 
 	void Update() 
@@ -94,7 +97,8 @@ public class ShipInput : DSTools.MessengerListener
 		{
 			//Debug.LogError("FlickedHandler got FlickGesture Direction=" + gesture.Direction.ToString() + " ScreenFlickVector=" + gesture.ScreenFlickVector.x + "," + gesture.ScreenFlickVector.y);
 			Vector2 flickVector = gesture.ScreenFlickVector;
-			this.SendMessengerMsg("flick", flickVector);
+			this.Human.HandleFlick(flickVector);
+			//this.SendMessengerMsg("flick", flickVector);
 		}
 	}
 
@@ -105,28 +109,21 @@ public class ShipInput : DSTools.MessengerListener
 		if (gesture != null)
 		{
 			Vector2 tapPoint = gesture.ScreenPosition;
+			this.Human.HandleTap(tapPoint);
 
-			this.SendMessengerMsg("tap", tapPoint);
-
-			//RaycastHit hitPoint = new RaycastHit();
-			//Ray ray = Camera.main.ScreenPointToRay(tapPoint);
-			//float rayDistance = 100f;
-			//string [] maskStrings = new string[2]{"Cube","CubeRow"};
-			//LayerMask mask = LayerMask.GetMask(maskStrings);
-
-			//if (Physics.Raycast(ray, out hitPoint, rayDistance, mask))
-	        //{
-	        //	GameObject obj = hitPoint.collider.gameObject;
-			//}
+			//this.SendMessengerMsg("tap", tapPoint);
 		}
 	}
 
 	private void TransformedHandler(object sender, EventArgs e)
 	{
+		Debug.LogError("TransformedHandler");
 		//ScreenTransformGesture
 		ScreenTransformGesture gesture = sender as ScreenTransformGesture;
 		if (gesture != null)
 		{
+			Vector2 deltaPos = gesture.ScreenPosition - gesture.PreviousScreenPosition;
+			this.Human.HandleTransform(deltaPos);
 		}
 	}
 
