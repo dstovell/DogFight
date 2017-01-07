@@ -9,12 +9,14 @@ public class WarpInConditionalAction : DSTools.ConditionalAction
 	public ShipController Ship;
 	public Transform WarpTo;
 
-	protected override void OnConditionsMet()
+	protected override bool OnConditionsMet(GameObject triggerer)
 	{
 		if (this.Ship != null)
 		{
 			this.Ship.Warp(WarpTo);
 		}
+
+		return true;
 	}
 }
 

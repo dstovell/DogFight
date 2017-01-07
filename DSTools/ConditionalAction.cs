@@ -29,7 +29,7 @@ public abstract class ConditionalAction : MonoBehaviour
 
 	public float DelaySeconds = 0f;
 
-	protected abstract void OnConditionsMet();
+	protected abstract bool OnConditionsMet(GameObject triggerer);
 
 	private bool AreConditionsMet()
 	{
@@ -71,23 +71,28 @@ public abstract class ConditionalAction : MonoBehaviour
 		return false;
 	}
 
-	private void CheckForTrigger()
+	private void CheckForTrigger(GameObject trigerer = null)
 	{
 		if ( this.Running && ((this.MaxTriggerCount == 0) || (this.TriggerCount < this.MaxTriggerCount)) )
 		{
 			if (this.AreConditionsMet())
 			{
-				StartCoroutine(this.CallOnConditionsMet());
+				StartCoroutine(this.CallOnConditionsMet(trigerer));
 				this.TriggerCount++;
 			}
 		}
 	}
 
-	private IEnumerator CallOnConditionsMet()
+	private IEnumerator CallOnConditionsMet(GameObject trigerer)
 	{
 		if (this.DelaySeconds > 0f) yield return new WaitForSeconds(this.DelaySeconds);
 
-		this.OnConditionsMet();
+		bool success = this.OnConditionsMet(trigerer);
+
+		if (!success)
+		{
+			this.TriggerCount--;
+		}
 	}
 
 	void Update()
@@ -102,7 +107,7 @@ public abstract class ConditionalAction : MonoBehaviour
     {
 		if ((this.Trigger == TriggerType.Trigger) || (this.Trigger == TriggerType.CollisionOrTrigger))
 		{
-			this.CheckForTrigger();
+			this.CheckForTrigger(other.gameObject);
 		}
     }
 
@@ -110,7 +115,7 @@ public abstract class ConditionalAction : MonoBehaviour
     {
 		if ((this.Trigger == TriggerType.Collision) || (this.Trigger == TriggerType.CollisionOrTrigger))
 		{
-			this.CheckForTrigger();
+			this.CheckForTrigger(other.gameObject);
 		}
     }
 }

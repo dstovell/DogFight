@@ -8,7 +8,7 @@ public class LaunchConditionalAction : DSTools.ConditionalAction
 {
 	public ShipController [] Ships;
 
-	protected override void OnConditionsMet()
+	protected override bool OnConditionsMet(GameObject triggerer)
 	{
 		for (int i=0; i<this.Ships.Length; i++)
 		{
@@ -17,6 +17,7 @@ public class LaunchConditionalAction : DSTools.ConditionalAction
 				this.Ships[i].Launch();
 			}
 		}
+		return true;
 	}
 }
 
