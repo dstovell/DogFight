@@ -228,7 +228,7 @@ public class ShipController : Combatant
 		this.moveMode = previousMode;
  	}
 
-	private void OpenHanger()
+	public void OpenHanger()
 	{
 		//Debug.LogError("OpenHanger " + this.name + " this.hangerOpen=" + this.hangerOpen);
 		if (!this.hangerOpen)
@@ -306,6 +306,11 @@ public class ShipController : Combatant
 
 	public void Warp(Transform to) 
 	{
+		if (this.transform.parent != null)
+		{
+			this.transform.SetParent(null);
+		}
+
 		this.Leader.SetSpeed(this.MoveSpeed);
 
 		this.moveMode = MoveMode.Warping;
@@ -348,11 +353,11 @@ public class ShipController : Combatant
 		this.moveMode = MoveMode.FreeNav;
 	}
 
-	private IEnumerator Launch(float secs) 
+	private IEnumerator Launch(float coastSecs) 
 	{
 		this.currentSpeed = this.MoveSpeed;
 		this.Leader.SetSpeed(this.MoveSpeed);
-		yield return StartCoroutine( CoastForSeconds(secs) );
+		yield return StartCoroutine( CoastForSeconds(coastSecs) );
 
 		if (this.FreeNavWaypoints.Length > 0)
 		{
