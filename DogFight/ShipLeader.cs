@@ -19,6 +19,8 @@ public class ShipLeader : MonoBehaviour
 	public SplineGroup splineGroup;
 	public FluffyUnderware.Curvy.CurvySpline spline;
 
+	public TrailRenderer Trail;
+
 	private float speed = 0f;
 
 	private bool useController = true;
@@ -122,10 +124,10 @@ public class ShipLeader : MonoBehaviour
 	{
 		yield return new WaitForSeconds(secs);
 
-		TrailRenderer trail = this.GetComponentInChildren<TrailRenderer>();
-		if (trail != null)
+		if (this.Trail != null)
 		{
-			trail.enabled = true;
+			//trail.enabled = true;
+			this.Trail.time = 10;
 		}
 	}
 
