@@ -147,7 +147,7 @@ public class ShipInput : DSTools.MessengerListener
 			return;
 		}
 
-		Debug.LogError("TransformedHandler");
+		//Debug.LogError("TransformedHandler");
 		//ScreenTransformGesture
 		ScreenTransformGesture gesture = sender as ScreenTransformGesture;
 		if (gesture != null)

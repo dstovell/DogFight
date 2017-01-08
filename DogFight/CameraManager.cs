@@ -34,6 +34,12 @@ public class CameraManager : MessengerListener
 			this.FollowCam.itsOrbitCam.itsOrbitCam = orbitCam;
 			this.FollowCam.itsTarget.itsTarget = target;
 
+			AudioListener listener = this.gameObject.GetComponent<AudioListener>();
+			if (listener != null)
+			{
+				listener.enabled = true;
+			}
+
 			if (lookAt != null)
 			{
 				this.FollowCam.itsLookat.itsEnable = true;
