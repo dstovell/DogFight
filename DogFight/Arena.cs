@@ -152,6 +152,8 @@ public class Arena : MonoBehaviour {
 
 	public void GenerateArena()
 	{
+		return;
+
 		List<Vector3> navPointPositions = new List<Vector3>();
 
 		float centerX = -1f * this.ArenaWidth/2f;
