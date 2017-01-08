@@ -22,7 +22,7 @@ public class Damageable : MonoBehaviour
 	private bool isAlive = true;
 
 	public float Health = 1f;
-	public GameObject DeathFxPrefab;
+	public GameObject DeathFx;
 	public bool DestroyOnDeath = true;
 	public float DestroyWaitSeconds = 0f;
 
@@ -62,17 +62,17 @@ public class Damageable : MonoBehaviour
 
 		if (!this.isAlive)
 		{
-			Debug.LogError(this.transform.root.gameObject.name + " is dead!");
+			//Debug.LogError(this.transform.root.gameObject.name + " is dead!");
 			this.StartCoroutine(this.OnDeath());
 		}
 	}
 
 	private IEnumerator OnDeath() 
 	{
-		if (this.DeathFxPrefab != null)
+		if (this.DeathFx != null)
 		{
-			GameObject obj = GameObject.Instantiate(this.DeathFxPrefab, this.transform.position, this.transform.rotation) as GameObject;
-			obj.transform.SetParent(this.transform);
+			this.DeathFx.SetActive(true);
+			this.DeathFx.transform.localScale = 3f*Vector3.one;
 		}
 
 		if (this.DestroyOnDeath)
@@ -84,7 +84,7 @@ public class Damageable : MonoBehaviour
 
 	public void OnTriggerEnter(Collider other)
 	{
-		Debug.LogError("OnTriggerEnter " + this.transform.root.gameObject.name + " hit " + other.gameObject.name );
+		//Debug.LogError("OnTriggerEnter " + this.transform.root.gameObject.name + " hit " + other.gameObject.name );
 	}
 }
 
