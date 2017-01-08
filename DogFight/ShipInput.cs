@@ -12,6 +12,9 @@ public class ShipInput : DSTools.MessengerListener
 {
 	public Camera cam;
 
+	public UltimateJoystick Joystick;
+	public float JoyStickMultiplier = 300f;
+
 	private Combatant Human;
 
 	void Awake()
@@ -34,6 +37,18 @@ public class ShipInput : DSTools.MessengerListener
 
 	void Update() 
 	{
+		if (this.IsJoystick() && (this.Human != null))
+		{
+			Vector2 pos = this.Joystick.GetPosition();
+			Vector2 deltaPos = (this.JoyStickMultiplier * Time.deltaTime) * pos;
+			//Debug.Log("pos=" + pos.ToString() + " deltaPos=" + deltaPos);
+			this.Human.HandleTransform(deltaPos);
+		}
+	}
+
+	public bool IsJoystick()
+	{
+		return ((this.Joystick != null) && this.Joystick.gameObject.activeInHierarchy);
 	}
 
 	private void OnEnable()
@@ -91,6 +106,11 @@ public class ShipInput : DSTools.MessengerListener
 
 	private void FlickedHandler(object sender, EventArgs e)
 	{
+		if (this.IsJoystick())
+		{
+			return;
+		}
+
 		//Debug.LogError("FlickedHandler");
 		FlickGesture gesture = sender as FlickGesture;
 		if (gesture != null)
@@ -104,6 +124,11 @@ public class ShipInput : DSTools.MessengerListener
 
 	private void TapHandler(object sender, EventArgs e)
 	{
+		if (this.IsJoystick())
+		{
+			return;
+		}
+
 		Debug.LogError("TapHandler");
 		TapGesture gesture = sender as TapGesture;
 		if (gesture != null)
@@ -117,6 +142,11 @@ public class ShipInput : DSTools.MessengerListener
 
 	private void TransformedHandler(object sender, EventArgs e)
 	{
+		if (this.IsJoystick())
+		{
+			return;
+		}
+
 		Debug.LogError("TransformedHandler");
 		//ScreenTransformGesture
 		ScreenTransformGesture gesture = sender as ScreenTransformGesture;

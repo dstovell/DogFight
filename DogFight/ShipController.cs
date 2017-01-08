@@ -80,7 +80,7 @@ public class ShipController : Combatant
 
 	public ArenaSpawn Spawn;
 
-	public SpriteObjectTracker Reticle;
+	public ShipReticle Reticle;
 
 	public ShipWeapon PrimaryWeapon;
 
@@ -213,8 +213,7 @@ public class ShipController : Combatant
 		HudController hud = HudController.Instance;
 		if (hud != null)
 		{
-			GameObject lookAt = GetCameraLookAt();
-			hud.CreateHud(this, lookAt);
+			hud.CreateHud(this, this.GetCameraLookAt());
 		}
 	}
 
@@ -322,24 +321,40 @@ public class ShipController : Combatant
 		this.transform.rotation = this.transform.rotation;
 	}
 
+	public SplineGroup GetSplineGroup() 
+	{
+		if (this.Leader != null)
+		{
+			return this.Leader.splineGroup;
+		}
+		return null;
+	}
+
+	public void SetSplineGroup(SplineGroup splineGroup) 
+	{
+		if (this.Leader != null)
+		{
+			this.Leader.SetSplineGroup(splineGroup);
+		}
+	}
+
 	private IEnumerator EnableForBattleIn(float secs)
 	{
 		EjectLeader();
 		this.moveMode = MoveMode.SplineNav;
 
 		SplineGroup splineGroup = SplineGroup.GetNewGroup(this.Leader);
-		this.Leader.SetSplineGroup(splineGroup);
+		this.SetSplineGroup(splineGroup);
 
 		if (secs > 0f) yield return new WaitForSeconds(secs);
 
-		this.LoadWeapon(this.PrimaryWeapon);
-
 		if (this.Pilot == PilotType.Human)
 		{
-			ArenaPanel.DisableAll();
 			SetupCamera();
 			SetupHUD();
 		}
+
+		this.LoadWeapon(this.PrimaryWeapon);
 	}
 
 	public void EnableForBattle()

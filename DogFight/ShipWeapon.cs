@@ -85,21 +85,21 @@ public class ShipWeapon : MonoBehaviour
 			return;
 		}
 
-		for (int i=0; i<this.Barrels.Length; i++)
-		{
-			Transform barrel = this.Barrels[i];
-			if (barrel != null)
-			{
-				if (target != null)
-				{
-					barrel.rotation = Quaternion.LookRotation( (target.transform.position - barrel.position).normalized );
-				}
-				else
-				{
-					barrel.localRotation = Quaternion.identity;
-				}
-			}
-		}
+//		for (int i=0; i<this.Barrels.Length; i++)
+//		{
+//			Transform barrel = this.Barrels[i];
+//			if (barrel != null)
+//			{
+//				if (target != null)
+//				{
+//					barrel.rotation = Quaternion.LookRotation( (target.transform.position - barrel.position).normalized );
+//				}
+//				else
+//				{
+//					barrel.localRotation = Quaternion.identity;
+//				}
+//			}
+//		}
 
 		this.FX.Fire();
 		this.isFiring = true;
