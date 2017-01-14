@@ -4,6 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 using TouchScript;
 using TouchScript.Gestures;
+using UnityEngine.Events;
+using UnityEngine.EventSystems;
 
 namespace DogFight
 {
@@ -14,6 +16,8 @@ public class ShipInput : DSTools.MessengerListener
 
 	public UltimateJoystick Joystick;
 	public float JoyStickMultiplier = 300f;
+
+	public UltimateButton [] Buttons;
 
 	private Combatant Human;
 
@@ -33,6 +37,12 @@ public class ShipInput : DSTools.MessengerListener
 	{
 		this.InitMessenger("ShipInput");
 		this.Human = ShipController.GetHuman();
+
+		if (this.Buttons.Length > 0)
+		{
+			this.Buttons[0].onButtonDown.AddListener(this.OnButtonDown);
+			this.Buttons[0].onButtonUp.AddListener(this.OnButtonUp);
+		}
 	}
 
 	void Update() 
@@ -44,6 +54,16 @@ public class ShipInput : DSTools.MessengerListener
 			//Debug.Log("pos=" + pos.ToString() + " deltaPos=" + deltaPos);
 			this.Human.HandleTransform(deltaPos);
 		}
+	}
+
+	public void OnButtonDown()
+	{
+		this.Human.StartFiring();
+	}
+
+	public void OnButtonUp()
+	{
+		this.Human.StopFiring();
 	}
 
 	public bool IsJoystick()

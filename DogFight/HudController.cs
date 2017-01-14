@@ -14,6 +14,8 @@ public class HudController : MonoBehaviour
 	public GameObject TargetPrefab;
 	public GameObject JoyStick;
 
+	public GameObject [] Buttons;
+
 	public List<SpriteObjectTracker> Targets;
 
 	public void CreateHud(ShipController humanShip, GameObject lookAt)
@@ -27,6 +29,11 @@ public class HudController : MonoBehaviour
 		if (this.JoyStick != null)
 		{
 			this.JoyStick.SetActive(true);
+		}
+
+		for (var i=0; i<this.Buttons.Length; i++)
+		{
+			this.Buttons[i].SetActive(true);
 		}
 	}
 

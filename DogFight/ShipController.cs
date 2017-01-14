@@ -190,7 +190,7 @@ public class ShipController : Combatant
 		this.LoadedWeapon = weapon;
 	}
 
-	public GameObject GetCameraLookAt()
+	public override GameObject GetCameraLookAt()
 	{
 		foreach(Transform child in this.transform)
 		{
@@ -203,17 +203,31 @@ public class ShipController : Combatant
         return null;
 	}
 
-	public void SetupCamera()
+	public override GameObject GetWeaponLookAt()
+	{
+		foreach(Transform child in this.Rotator.transform)
+		{
+        	if(child.tag == "WeaponLookAt")
+        	{
+				return child.gameObject;
+				break;
+        	}
+        }
+        return null;
+	}
+
+
+	public override void SetupCamera()
 	{
 		CameraManager.Instance.EnableFollowCam(this.gameObject, GetCameraLookAt());
 	}
 
-	public void SetupHUD()
+	public override void SetupHUD()
 	{
 		HudController hud = HudController.Instance;
 		if (hud != null)
 		{
-			hud.CreateHud(this, this.GetCameraLookAt());
+			hud.CreateHud(this, this.GetWeaponLookAt());
 		}
 	}
 
@@ -760,6 +774,17 @@ public class ShipController : Combatant
 		this.Leader.Stop();
 	}
 
+	public void AdjustPosition(Vector2 adjustTargetPos)
+	{
+		float maxRadius = 30f;
+		Vector3 pos = this.Rotator.transform.localPosition;
+		pos.x += adjustTargetPos.x;
+		pos.y += adjustTargetPos.y;
+		pos.z = 0f;
+
+		this.Rotator.transform.localPosition = Vector3.ClampMagnitude(pos, maxRadius);
+	}
+
 	public override void HandleTransform(Vector2 deltaPos)
 	{
 		if (this.IsMoving())
@@ -767,7 +792,7 @@ public class ShipController : Combatant
 			if (this.moveMode == MoveMode.SplineNav)
 			{
 				Vector3 adjustment = 0.1f*deltaPos;
-				this.Leader.AdjustTargetPosition(adjustment);
+				this.AdjustPosition(adjustment);
 			}
 		}
 	}

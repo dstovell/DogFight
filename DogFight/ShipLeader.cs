@@ -164,7 +164,7 @@ public class ShipLeader : MonoBehaviour
 
 		this.controller.Play();
 
-		StartCoroutine(EnablePathRender(4f));
+		//StartCoroutine(EnablePathRender(4f));
 	}
 
 	public void MovePath(List<Vector3> points, bool loop = false)

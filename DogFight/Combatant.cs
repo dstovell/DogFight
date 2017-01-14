@@ -54,7 +54,7 @@ public abstract class Combatant : MessengerListener
 		return weapon.IsInFireArc(target, this.transform);
 	}
 
-	public void FireAt(ShipWeapon weapon, GameObject target)
+	public void FireAt(ShipWeapon weapon, GameObject target = null)
 	{
 		if (weapon == null)
 		{
@@ -179,6 +179,16 @@ public abstract class Combatant : MessengerListener
 		}
 	}
 
+	public void StartFiring()
+	{
+		this.FireAt(this.LoadedWeapon);
+	}
+
+	public void StopFiring()
+	{
+		this.StopFiring(this.LoadedWeapon);
+	}
+
 	public void HandleTap(Vector2 screenPoint)
 	{
 		if (!this.AutoFiring)
@@ -186,6 +196,11 @@ public abstract class Combatant : MessengerListener
 			this.FireAt(screenPoint);
 		}
 	}
+
+	public abstract GameObject GetCameraLookAt();
+	public abstract GameObject GetWeaponLookAt();
+	public abstract void SetupCamera();
+	public abstract void SetupHUD();
 
 	public abstract void HandleTransform(Vector2 deltaPos);
 	public abstract void HandleFlick(Vector2 flickVector);

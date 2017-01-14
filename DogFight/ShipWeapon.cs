@@ -18,6 +18,8 @@ public class ShipWeapon : MonoBehaviour
 
 	public Transform [] Barrels;
 
+	public GameObject [] Reticles;
+
 	private float currentCooldown = 0f;
 	private bool isFiring = false;
 
@@ -71,6 +73,11 @@ public class ShipWeapon : MonoBehaviour
 	{
 		this.FX.DefaultFXType = this.FxType;
 		this.FX.TurretSocket = this.Barrels;
+
+		for (int i=0; i<this.Reticles.Length; i++)
+		{
+			this.Reticles[i].SetActive(true);
+		}
 	}
 
 	public bool IsFiring()
@@ -109,8 +116,11 @@ public class ShipWeapon : MonoBehaviour
 			this.OnHit(target);
 		}
 
-		float burstTime = Mathf.Max(this.BurstTime, 0.1f);
-		StartCoroutine( StopFiringInSeconds(burstTime) );
+		if (this.BurstTime > 0.0f)
+		{
+			float burstTime = Mathf.Max(this.BurstTime, 0.1f);
+			StartCoroutine( StopFiringInSeconds(burstTime) );
+		}
 	}
 
 	public void StopFiring()
