@@ -30,6 +30,7 @@ public class CameraManager : MessengerListener
 			this.panel.enabled = false;
 			GetCamera().enabled = true;
 			KGFOrbitCam orbitCam = this.GetOrbitCamera();
+			orbitCam.enabled = true;
 			orbitCam.gameObject.tag = "MainCamera";
 			this.FollowCam.itsOrbitCam.itsOrbitCam = orbitCam;
 			this.FollowCam.itsTarget.itsTarget = target;

@@ -208,7 +208,6 @@ public class ShipController : Combatant
         	if(child.tag == "CameraLookAt")
         	{
 				return child.gameObject;
-				break;
         	}
         }
         return null;
@@ -221,7 +220,6 @@ public class ShipController : Combatant
         	if(child.tag == "WeaponLookAt")
         	{
 				return child.gameObject;
-				break;
         	}
         }
         return null;
