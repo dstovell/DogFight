@@ -85,36 +85,39 @@ public class ShipWeapon : MonoBehaviour
 		return this.isFiring;
 	}
 
-	public void FireAt(GameObject target)
+	public void FireAt(GameObject target = null)
 	{
 		if (this.IsFiring() || this.IsOnCooldown())
 		{
 			return;
 		}
 
-//		for (int i=0; i<this.Barrels.Length; i++)
-//		{
-//			Transform barrel = this.Barrels[i];
-//			if (barrel != null)
-//			{
-//				if (target != null)
-//				{
-//					barrel.rotation = Quaternion.LookRotation( (target.transform.position - barrel.position).normalized );
-//				}
-//				else
-//				{
-//					barrel.localRotation = Quaternion.identity;
-//				}
-//			}
-//		}
+		if (target != null)
+		{
+			for (int i=0; i<this.Barrels.Length; i++)
+			{
+				Transform barrel = this.Barrels[i];
+				if (barrel != null)
+				{
+					if (target != null)
+					{
+						barrel.rotation = Quaternion.LookRotation( (target.transform.position - barrel.position).normalized );
+					}
+					else
+					{
+						barrel.localRotation = Quaternion.identity;
+					}
+				}
+			}
+		}
 
 		this.FX.Fire();
 		this.isFiring = true;
 
-		if (target != null)
-		{
-			this.OnHit(target);
-		}
+//		if (target != null)
+//		{
+//			this.OnHit(target);
+//		}
 
 		if (this.BurstTime > 0.0f)
 		{
