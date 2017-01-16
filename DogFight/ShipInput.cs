@@ -17,6 +17,9 @@ public class ShipInput : DSTools.MessengerListener
 	public UltimateJoystick Joystick;
 	public float JoyStickMultiplier = 300f;
 
+	public UltimateJoystick Throttle;
+	float ThrottleDeadZone = 0.2f;
+
 	public UltimateButton [] Buttons;
 
 	private Combatant Human;
@@ -47,23 +50,61 @@ public class ShipInput : DSTools.MessengerListener
 
 	void Update() 
 	{
-		if (this.IsJoystick() && (this.Human != null))
+		if (this.Human != null)
 		{
-			Vector2 pos = this.Joystick.GetPosition();
-			Vector2 deltaPos = (this.JoyStickMultiplier * Time.deltaTime) * pos;
-			//Debug.Log("pos=" + pos.ToString() + " deltaPos=" + deltaPos);
-			this.Human.HandleTransform(deltaPos);
+			if (this.IsJoystick())
+			{
+				Vector2 pos = this.Joystick.GetPosition();
+				Vector2 deltaPos = (this.JoyStickMultiplier * Time.deltaTime) * pos;
+				//Debug.Log("pos=" + pos.ToString() + " deltaPos=" + deltaPos);
+				this.Human.HandleTransform(deltaPos);
+			}
+
+			if (this.Throttle != null)
+			{
+				bool isThrottleTouched = this.Throttle.GetJoystickState();
+				float throttleAmount = this.Throttle.GetVerticalAxis();
+				//Debug.Log("isThrottleTouched=" + isThrottleTouched + " throttleAmount=" + throttleAmount);
+				if (isThrottleTouched)
+				{
+					if (Mathf.Abs(throttleAmount) >= this.ThrottleDeadZone)
+					{
+						this.StopFiring();
+						this.Human.HandleThrottle(throttleAmount);
+					}
+					else
+					{
+						this.StartFiring();
+						this.Human.HandleThrottle(0f);
+					}
+				}
+				else 
+				{
+					this.StopFiring();
+					this.Human.HandleThrottle(0f);
+				}
+			}
 		}
 	}
 
-	public void OnButtonDown()
+	private void StartFiring()
 	{
 		this.Human.StartFiring();
 	}
 
-	public void OnButtonUp()
+	private void StopFiring()
 	{
 		this.Human.StopFiring();
+	}
+
+	public void OnButtonDown()
+	{
+		this.StartFiring();
+	}
+
+	public void OnButtonUp()
+	{
+		this.StopFiring();
 	}
 
 	public bool IsJoystick()

@@ -181,11 +181,21 @@ public abstract class Combatant : MessengerListener
 
 	public void StartFiring()
 	{
+		if (this.IsFiring(this.LoadedWeapon))
+		{
+			return;
+		}
+
 		this.FireAt(this.LoadedWeapon);
 	}
 
 	public void StopFiring()
 	{
+		if (!this.IsFiring(this.LoadedWeapon))
+		{
+			return;
+		}
+
 		this.StopFiring(this.LoadedWeapon);
 	}
 
@@ -203,6 +213,7 @@ public abstract class Combatant : MessengerListener
 	public abstract void SetupHUD();
 
 	public abstract void HandleTransform(Vector2 deltaPos);
+	public abstract void HandleThrottle(float throttleAmount);
 	public abstract void HandleFlick(Vector2 flickVector);
 
 	public override void OnMessage(string id, object obj1, object obj2)

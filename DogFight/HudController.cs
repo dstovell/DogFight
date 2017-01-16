@@ -13,6 +13,7 @@ public class HudController : MonoBehaviour
 	public GameObject ReticleObj;
 	public GameObject TargetPrefab;
 	public GameObject JoyStick;
+	public GameObject Throttle;
 
 	public GameObject [] Buttons;
 
@@ -29,6 +30,11 @@ public class HudController : MonoBehaviour
 		if (this.JoyStick != null)
 		{
 			this.JoyStick.SetActive(true);
+		}
+
+		if (this.Throttle != null)
+		{
+			this.Throttle.SetActive(true);
 		}
 
 		for (var i=0; i<this.Buttons.Length; i++)

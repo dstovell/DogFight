@@ -53,6 +53,8 @@ public class ShipController : Combatant
 	private int FreeNavWaypointIndex = -1;
 
 	public float MoveSpeed = 1f;
+	public float BoostSpeed = 1f;
+	public float SlowSpeed = 1f;
 	public float RotateSpeed = 1f;
 	public float DesiredLeaderDist = 5f;
 
@@ -94,6 +96,7 @@ public class ShipController : Combatant
 	private Vector3 coastVector;
 	private bool isCoasting = false;
 	private float currentSpeed = 0f;
+	private float boostAmount = 0f;
 
 	public float StartRotate = 0f;
 	public float GoalRotate = 0f;
@@ -157,6 +160,9 @@ public class ShipController : Combatant
 			this.StartRotate = this.Rotator.transform.localRotation.z;
 			this.CurrentRotate = this.StartRotate;
 		}
+
+		this.currentSpeed = 0f;
+		this.boostAmount = 0f;
 	}
 
 	public bool IsLeaderEjected()
@@ -170,7 +176,31 @@ public class ShipController : Combatant
 		{
 			this.Leader.gameObject.name = this.gameObject.name + "_Leader";
 			this.Leader.gameObject.transform.SetParent(null);
-			this.Leader.SetSpeed(this.MoveSpeed);
+			this.UpdateMoveSpeed();
+		}
+	}
+
+	private float GetDesiredSpeed()
+	{
+		if (this.boostAmount == 0f)
+		{
+			return this.MoveSpeed;
+		}
+		else if (this.boostAmount > 0f)
+		{
+			return Mathf.Lerp(this.MoveSpeed, this.BoostSpeed, this.boostAmount);
+		}
+		else
+		{
+			return Mathf.Lerp(this.MoveSpeed, this.SlowSpeed, -1f*this.boostAmount);
+		}
+	}
+
+	private void UpdateMoveSpeed()
+	{
+		if (this.Leader != null)
+		{
+			this.Leader.SetSpeed(this.GetDesiredSpeed());
 		}
 	}
 
@@ -324,7 +354,7 @@ public class ShipController : Combatant
 			this.transform.SetParent(null);
 		}
 
-		this.Leader.SetSpeed(this.MoveSpeed);
+		this.UpdateMoveSpeed();
 
 		this.moveMode = MoveMode.Warping;
 		this.WarpTo = to.position;
@@ -384,8 +414,8 @@ public class ShipController : Combatant
 
 	private IEnumerator Launch(float coastSecs) 
 	{
-		this.currentSpeed = this.MoveSpeed;
-		this.Leader.SetSpeed(this.MoveSpeed);
+		this.currentSpeed = this.GetDesiredSpeed();
+		this.UpdateMoveSpeed();
 		yield return StartCoroutine( CoastForSeconds(coastSecs) );
 
 		if (this.FreeNavWaypoints.Length > 0)
@@ -405,7 +435,7 @@ public class ShipController : Combatant
 			this.StopFiring(this.LoadedWeapon);
 			this.Stop();
 			this.UpdateThrusters();
-			float deadSpeed = 0.2f * this.MoveSpeed;
+			float deadSpeed = 0.2f * this.GetDesiredSpeed();
 			this.transform.position += this.transform.forward * deadSpeed * Time.deltaTime;
 			return;
 		}
@@ -504,7 +534,7 @@ public class ShipController : Combatant
 		}
 
 		float distanceToLeader = Vector3.Distance(this.transform.position, this.Leader.GetTargetPosition());
-		this.currentSpeed = this.MoveSpeed * Mathf.Min(distanceToLeader/this.DesiredLeaderDist, 2.0f);
+		this.currentSpeed = this.GetDesiredSpeed() * Mathf.Min(distanceToLeader/this.DesiredLeaderDist, 2.0f);
 		this.transform.position += this.transform.forward * this.currentSpeed * Time.deltaTime;
 
 		if (this.Leader.IsMoving() && (distanceToLeader > 1.5f*this.currentSpeed))
@@ -516,6 +546,7 @@ public class ShipController : Combatant
 			this.Leader.UnPause();
 		}
 
+		this.UpdateMoveSpeed();
 		this.UpdateThrusters();
 		this.UpdateRotator();
 		this.UpdateWeapons();
@@ -795,6 +826,11 @@ public class ShipController : Combatant
 				this.AdjustPosition(adjustment);
 			}
 		}
+	}
+
+	public override void HandleThrottle(float throttleAmount)
+	{
+		this.boostAmount = throttleAmount;
 	}
 
 	public override void HandleFlick(Vector2 flickVector)
