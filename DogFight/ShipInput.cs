@@ -176,10 +176,8 @@ public class ShipInput : DSTools.MessengerListener
 		FlickGesture gesture = sender as FlickGesture;
 		if (gesture != null)
 		{
-			//Debug.LogError("FlickedHandler got FlickGesture Direction=" + gesture.Direction.ToString() + " ScreenFlickVector=" + gesture.ScreenFlickVector.x + "," + gesture.ScreenFlickVector.y);
 			Vector2 flickVector = gesture.ScreenFlickVector;
 			this.Human.HandleFlick(flickVector);
-			//this.SendMessengerMsg("flick", flickVector);
 		}
 	}
 
@@ -190,14 +188,12 @@ public class ShipInput : DSTools.MessengerListener
 			return;
 		}
 
-		Debug.LogError("TapHandler");
+		//Debug.LogError("TapHandler");
 		TapGesture gesture = sender as TapGesture;
 		if (gesture != null)
 		{
 			Vector2 tapPoint = gesture.ScreenPosition;
 			this.Human.HandleTap(tapPoint);
-
-			//this.SendMessengerMsg("tap", tapPoint);
 		}
 	}
 
@@ -209,7 +205,6 @@ public class ShipInput : DSTools.MessengerListener
 		}
 
 		//Debug.LogError("TransformedHandler");
-		//ScreenTransformGesture
 		ScreenTransformGesture gesture = sender as ScreenTransformGesture;
 		if (gesture != null)
 		{

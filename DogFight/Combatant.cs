@@ -222,26 +222,6 @@ public abstract class Combatant : MessengerListener
 		{
 			return;
 		}
-
-		switch(id)
-		{
-		case "tap":
-		{
-			Vector2 screenPoint = (Vector2)obj1;
-			this.HandleTap(screenPoint);
-		}
-		break;
-
-		case "flick":
-		{
-			Vector2 flickVector = (Vector2)obj1;
-			this.HandleFlick(flickVector);
-		}
-		break;
-
-		default:
-			break;
-		}
 	}
 }
 

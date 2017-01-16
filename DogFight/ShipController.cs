@@ -7,25 +7,6 @@ using DSTools;
 namespace DogFight
 {
 
-public class AvailableMove
-{
-	public AvailableMove(Vector3 pos, Vector3 conPos, Vector2 proj)
-	{
-		this.position = pos;	
-		this.projection = proj;
-		this.connectionPosition = conPos;
-	}
-
-	public float AngleBetween(Vector2 a)
-	{
-		return Vector2.Angle(this.projection, a);
-	}
-
-	public Vector3 position;
-	public Vector2 projection;
-	public Vector3 connectionPosition;
-}
-
 public class ShipController : Combatant
 {
 	static public List<ShipController> Ships = new List<ShipController>();
@@ -449,11 +430,6 @@ public class ShipController : Combatant
 
 			this.transform.position = Vector3.Lerp(this.WarpFrom, this.WarpTo, t);
 
-			if (t >= 1f)
-			{
-				//StartCoroutine(EnableForBattleIn(1.0f));
-			}
-
 			this.UpdateThrusters();
 
 			return;
@@ -663,58 +639,6 @@ public class ShipController : Combatant
 		}
 	}
 
-	public List<Vector3> GetAvailableMoveDirections()
-	{
-		return this.Leader.GetChangeSplineDirections();
-	}
-
-	public List<AvailableMove> GetAvailableMoves()
-	{
-		float minDistance = 100;
-		List<AvailableMove> moves = new List<AvailableMove>();
-		NNInfo nextNodeInfo = this.GetNextNode(minDistance);
-		if (nextNodeInfo.node != null)
-		{
-			PointNode nextNode = nextNodeInfo.node as PointNode;
-			Vector3 nextNodePos = (Vector3)nextNode.position;
-			if (nextNode != null)
-			{
-				for (int i=0; i<nextNode.connections.Length; i++)
-				{
-					GraphNode moveNode = nextNode.connections[i];
-					Vector3 pos = (Vector3)moveNode.position;
-					if (this.Leader.IsOnCurrentPath(pos))
-					{
-						continue;
-					}
-
-					if (this.transform.forward.z > 0)
-					{
-						if (pos.z > this.transform.position.z)
-						{
-							moves.Add(new AvailableMove(pos, nextNodePos, this.ProjectPoint(pos)));
-						}
-					}
-					else
-					{
-						if (pos.z < this.transform.position.z)
-						{
-							moves.Add(new AvailableMove(pos, nextNodePos, this.ProjectPoint(pos)));
-						}
-					}
-				}
-			}
-		}
-		return moves;
-	}
-
-	public Vector2 ProjectPoint(Vector3 pos)
-	{
-		Vector3 currentPos = this.transform.position;
-		Vector2 proj = new Vector2(pos.x - currentPos.x, pos.y - currentPos.y);
-		return proj.normalized;
-	}
-
 	public NNInfo GetNextNode(float minDistance)
 	{
 		Vector3 waypointPos = this.Leader.GetNextWayPoint(minDistance);
@@ -790,8 +714,6 @@ public class ShipController : Combatant
 
 		this.MovePath(newPath);
 
-		//ArenaManager.Instance.HighlightPath(p.vectorPath);
-
 		this.isPathfinding = false;
 	}
 
@@ -835,33 +757,6 @@ public class ShipController : Combatant
 
 	public override void HandleFlick(Vector2 flickVector)
 	{
-		float maxAngle = 30;	
-
-		flickVector.Normalize();
-		this.Leader.ChangeSpline(flickVector, maxAngle);
-
-//		List<AvailableMove> moves = this.GetAvailableMoves();
-//		float closestAngle = 400;
-//		AvailableMove closestMove = null;
-//		for (int i=0; i<moves.Count; i++)
-//		{
-//			float angleBetween = moves[i].AngleBetween(flickVector);
-//			if (angleBetween < closestAngle)
-//			{
-//				closestAngle = angleBetween;
-//				closestMove = moves[i];
-//			}
-//		}
-//
-//		if (closestAngle <= minThreshold)
-//		{
-//			Debug.Log("flickVector " + flickVector.ToString());
-//			Debug.Log("closestMove proj" + closestMove.projection.ToString());
-//			Debug.Log("closestAngle " + closestAngle);
-//			Debug.Log("closestMove " + closestMove.position.ToString());
-//
-//			this.ChangePath(closestMove.connectionPosition, closestMove.position);
-//		}
 	}
 
 	void OnCollisionEnter(Collision info)
