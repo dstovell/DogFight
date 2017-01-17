@@ -82,7 +82,9 @@ public class ShipController : Combatant
 	public float StartRotate = 0f;
 	public float GoalRotate = 0f;
 	public float CurrentRotate = 0f;
-	public float CurrentTurnY = 0f;
+	public FloatAverager RotateAverager = new FloatAverager(20);
+	public FloatAverager TransformAverager = new FloatAverager(5);
+	private float horizontalAdjustment = 0f;
 
 	public bool RotateStarted = false;
 	private float NextIdleRotateDir = 1;
@@ -495,9 +497,13 @@ public class ShipController : Combatant
 		}
 
 		Vector3 cross = Vector3.Cross(this.transform.rotation*Vector3.forward, desiredRotation*Vector3.forward);
-		this.CurrentTurnY = cross.y;
+		this.RotateAverager.AddValue(cross.y);
+
+		this.TransformAverager.AddValue(this.horizontalAdjustment);
+		this.horizontalAdjustment = 0f;
 
 		this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, desiredRotation, this.RotateSpeed*Time.deltaTime);
+
 		if (!this.IsTurning())
 		{
 			this.SetRotateMode(RotateMode.Idle);
@@ -522,7 +528,7 @@ public class ShipController : Combatant
 
 		this.UpdateMoveSpeed();
 		this.UpdateThrusters();
-		this.UpdateRotator();
+		this.UpdateRotatorSmooth();
 		this.UpdateWeapons();
 		this.ScanForHostiles();
 	}
@@ -578,9 +584,18 @@ public class ShipController : Combatant
 		return (targetAngle == this.CurrentRotate);
 	}
 
+	public float GetTurnAmount()
+	{
+		float rotateAverage = this.RotateAverager.GetLinearAverage();
+		float transformAverage = this.TransformAverager.GetLinearAverage();
+		return rotateAverage + transformAverage;
+		//return 0.5f*rotateAverage + 0.5f*transformAverage;
+		//return 
+	}
+
 	public bool IsTurning()
 	{
-		float absY = Mathf.Abs(this.CurrentTurnY);
+		float absY = Mathf.Abs(this.GetTurnAmount());
 		return (absY > 0.0035f);
 	}
 
@@ -621,7 +636,7 @@ public class ShipController : Combatant
 		{
 			if (this.RotateStarted)
 			{
-				this.GoalRotate = this.CurrentTurnY * -5000f;
+				this.GoalRotate = this.GetTurnAmount() * -5000f;
 				this.GoalRotate = Mathf.Clamp(this.GoalRotate, -1f*this.MaxTurnRotate, this.MaxTurnRotate);
 
 				bool done = this.RotateTowards(this.GoalRotate, this.TurnRotatorSpeed);
@@ -631,6 +646,50 @@ public class ShipController : Combatant
 					this.RotateStarted = false;
 				}
 			}
+		}
+		else if (this.rotateMode == RotateMode.SpiralTurn)
+		{
+		}
+	}
+
+	private void UpdateRotatorSmooth()
+	{
+		if (this.Rotator == null)
+		{
+			return;
+		}
+
+		if (this.rotateMode == RotateMode.Idle)
+		{
+			if (this.RotateStarted)
+			{
+				bool done = this.RotateTowards(this.GoalRotate, this.IdleRotatorSpeed);
+				if (done) 
+				{
+					this.GoalRotate = 0f;
+					this.RotateStarted = false;
+				}
+			}
+			else 
+			{
+				bool done = this.RotateTowards(this.StartRotate, this.IdleRotatorReturnSpeed);
+				if (done) 
+				{
+					float minRotate = 0.2f;
+					float randomT = (this.NextIdleRotateDir > 0) ? Random.Range(minRotate, 1f) : Random.Range(-1f, -1*minRotate);
+					float randomAngle = this.MaxIdleRotate*randomT;
+					this.GoalRotate = randomAngle + this.StartRotate;
+					this.RotateStarted = true;
+
+					this.NextIdleRotateDir *= -1f;
+				}
+			}
+		}
+		else if (this.rotateMode == RotateMode.Turn)
+		{
+			this.GoalRotate = this.GetTurnAmount() * -3000f;
+			this.GoalRotate = Mathf.Clamp(this.GoalRotate, -1f*this.MaxTurnRotate, this.MaxTurnRotate);
+			this.RotateTowards(this.GoalRotate, this.TurnRotatorSpeed);
 		}
 		else if (this.rotateMode == RotateMode.SpiralTurn)
 		{
@@ -743,6 +802,7 @@ public class ShipController : Combatant
 			if (this.moveMode == MoveMode.SplineNav)
 			{
 				Vector3 adjustment = 0.1f*deltaPos;
+				this.horizontalAdjustment = adjustment.x;
 				this.AdjustPosition(adjustment);
 			}
 		}
