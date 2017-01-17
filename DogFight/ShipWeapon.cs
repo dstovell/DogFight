@@ -15,6 +15,7 @@ public class ShipWeapon : MonoBehaviour
 	public float Damage;
 	public float MaxRange;
 	public float FireArcDegrees;
+	public LayerMask DamageMask;
 
 	public Transform [] Barrels;
 
@@ -111,7 +112,7 @@ public class ShipWeapon : MonoBehaviour
 			}
 		}
 
-		this.FX.Fire();
+		this.FX.Fire(this.DamageMask, this.Damage);
 		this.isFiring = true;
 
 //		if (target != null)

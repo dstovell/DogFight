@@ -542,7 +542,7 @@ public class ShipController : Combatant
 			}
 			else
 			{
-				trail.time = 0.5f;
+				trail.time = 0.3f;
 			}
 		}
 	}
