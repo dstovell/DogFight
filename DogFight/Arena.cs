@@ -178,11 +178,14 @@ public class Arena : MonoBehaviour {
 			this.AddNavPoint(navPointPositions[n], this.NavPoints.transform);
 		}
 
-		float xyMaxDist = 1.5f*this.ArenaSegmentSpacing;
-		float zMaxDist = 1.5f*this.ArenaSegmentLength;
-		AstarPath.active.astarData.pointGraph.limits = new Vector3(xyMaxDist, xyMaxDist, zMaxDist);
-		AstarPath.active.astarData.pointGraph.maxDistance = zMaxDist;
-		AstarPath.active.Scan();
+		if ((AstarPath.active != null) && (AstarPath.active.astarData != null))
+		{
+			float xyMaxDist = 1.5f*this.ArenaSegmentSpacing;
+			float zMaxDist = 1.5f*this.ArenaSegmentLength;
+			AstarPath.active.astarData.pointGraph.limits = new Vector3(xyMaxDist, xyMaxDist, zMaxDist);
+			AstarPath.active.astarData.pointGraph.maxDistance = zMaxDist;
+			AstarPath.active.Scan();
+		}
 
 //		AstarPath.RegisterSafeUpdate (() => {
 //			PointGraph graph = AstarPath.active.astarData.pointGraph;

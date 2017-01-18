@@ -72,13 +72,13 @@ public class Damageable : MonoBehaviour
 		if (this.DeathFx != null)
 		{
 			this.DeathFx.SetActive(true);
-			this.DeathFx.transform.localScale = 3f*Vector3.one;
+			this.DeathFx.transform.localScale = 10f*Vector3.one;
 		}
 
 		if (this.DestroyOnDeath)
 		{
 			yield return new WaitForSeconds(this.DestroyWaitSeconds);
-			GameObject.Destroy(this.gameObject);
+			this.gameObject.SetActive(false);
 		}
  	}
 
