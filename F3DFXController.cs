@@ -302,11 +302,17 @@ namespace Forge3D
         {
         }
 
+		public Quaternion GetOffSet()
+		{
+			return Quaternion.identity;
+			//return Quaternion.Euler(UnityEngine.Random.onUnitSphere);
+		}
+
         // Fire vulcan weapon
         void Vulcan()
         {
             // Get random rotation that offset spawned projectile
-            Quaternion offset = Quaternion.Euler(UnityEngine.Random.onUnitSphere); 
+            Quaternion offset = GetOffSet(); 
             // Spawn muzzle flash and projectile with the rotation offset at current socket position
             F3DPoolManager.Pools["GeneratedPool"].Spawn(vulcanMuzzle, TurretSocket[curSocket].position,
                 TurretSocket[curSocket].rotation, TurretSocket[curSocket]);
@@ -344,7 +350,7 @@ namespace Forge3D
         // Fire sologun weapon
         void SoloGun()
         {
-            Quaternion offset = Quaternion.Euler(UnityEngine.Random.onUnitSphere);
+            Quaternion offset = GetOffSet();
             F3DPoolManager.Pools["GeneratedPool"].Spawn(soloGunMuzzle, TurretSocket[curSocket].position,
                 TurretSocket[curSocket].rotation, TurretSocket[curSocket]);
             GameObject newGO =
@@ -370,7 +376,7 @@ namespace Forge3D
         // Fire sniper weapon
         void Sniper()
         {
-            Quaternion offset = Quaternion.Euler(UnityEngine.Random.onUnitSphere);
+            Quaternion offset = GetOffSet();
 
             F3DPoolManager.Pools["GeneratedPool"].Spawn(sniperMuzzle, TurretSocket[curSocket].position,
                 TurretSocket[curSocket].rotation, TurretSocket[curSocket]);
@@ -398,7 +404,7 @@ namespace Forge3D
         // Fire shotgun weapon
         void ShotGun()
         {
-            Quaternion offset = Quaternion.Euler(UnityEngine.Random.onUnitSphere);
+            Quaternion offset = GetOffSet();
             F3DPoolManager.Pools["GeneratedPool"].Spawn(shotGunMuzzle, TurretSocket[curSocket].position,
                 TurretSocket[curSocket].rotation, TurretSocket[curSocket]);
             F3DPoolManager.Pools["GeneratedPool"].Spawn(shotGunProjectile, TurretSocket[curSocket].position,
@@ -412,7 +418,7 @@ namespace Forge3D
         // Fire seeker weapon
         void Seeker()
         {
-            Quaternion offset = Quaternion.Euler(UnityEngine.Random.onUnitSphere);
+            Quaternion offset = GetOffSet();
             F3DPoolManager.Pools["GeneratedPool"].Spawn(seekerMuzzle, TurretSocket[curSocket].position,
                 TurretSocket[curSocket].rotation, TurretSocket[curSocket]);
             GameObject newGO =
@@ -437,7 +443,7 @@ namespace Forge3D
         // Fire rail gun weapon
         void RailGun()
         {
-            Quaternion offset = Quaternion.Euler(UnityEngine.Random.onUnitSphere);
+            Quaternion offset = GetOffSet();
             F3DPoolManager.Pools["GeneratedPool"].Spawn(railgunMuzzle, TurretSocket[curSocket].position,
                 TurretSocket[curSocket].rotation, TurretSocket[curSocket]);
             GameObject newGO =
@@ -464,7 +470,7 @@ namespace Forge3D
         // Fire plasma gun weapon
 		void PlasmaGun(LayerMask damageMask, float damage)
         {
-            Quaternion offset = Quaternion.Euler(UnityEngine.Random.onUnitSphere);
+            Quaternion offset = GetOffSet();
             F3DPoolManager.Pools["GeneratedPool"].Spawn(plasmagunMuzzle, TurretSocket[curSocket].position,
                 TurretSocket[curSocket].rotation, TurretSocket[curSocket]);
 			Transform newTrans =  F3DPoolManager.Pools["GeneratedPool"].Spawn(plasmagunProjectile, TurretSocket[curSocket].position, offset*TurretSocket[curSocket].rotation, null);;
@@ -534,7 +540,7 @@ namespace Forge3D
         // Fire laser pulse weapon
         void LaserImpulse()
         {
-            Quaternion offset = Quaternion.Euler(UnityEngine.Random.onUnitSphere);
+            Quaternion offset = GetOffSet();
             F3DPoolManager.Pools["GeneratedPool"].Spawn(laserImpulseMuzzle, TurretSocket[curSocket].position,
                 TurretSocket[curSocket].rotation, TurretSocket[curSocket]);
             GameObject newGO =

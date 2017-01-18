@@ -77,7 +77,16 @@ public class HudController : MonoBehaviour
 
 		for (int i=0; i<this.Targets.Count; i++)
 		{
-			this.Targets[i].viewPosition = human.gameObject;
+			SpriteObjectTracker sprite = this.Targets[i];
+			if (sprite.gameObject.activeInHierarchy && (sprite.target != null))
+			{
+				sprite.viewPosition = human.gameObject;
+				ShipController ship = sprite.target.gameObject.GetComponent<ShipController>();
+				if (ship.IsDead())
+				{
+					sprite.gameObject.SetActive(false);
+				}
+			}
 		}
 	}
 }

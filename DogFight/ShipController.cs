@@ -121,6 +121,23 @@ public class ShipController : Combatant
 		}
 	}
 
+	public static void SetupTargetables()
+	{
+		ShipController human = ShipController.GetHuman();
+		HudController hud = HudController.Instance;
+		if ((hud != null) && (human != null))
+		{
+			for (int i=0; i<ShipController.Ships.Count; i++)
+			{
+				ShipController ship = ShipController.Ships[i];
+				if (FactionController.Instance.IsHostile(human.Faction, ship.Faction))
+				{
+					hud.CreateTargetable(ship);
+				}
+			}
+		}
+	}
+
 	void Awake()
 	{
 		ShipController.Ships.Add(this);
@@ -239,6 +256,8 @@ public class ShipController : Combatant
 		if (hud != null)
 		{
 			hud.CreateHud(this, this.GetWeaponLookAt());
+
+			SetupTargetables();
 		}
 	}
 

@@ -11,6 +11,7 @@ public class SpriteObjectTracker : MonoBehaviour {
 	public GameObject viewPosition;
 	public float minRange = 0f;
 	public float fullSizeRange = 0f;
+	public float scaleMultiplier = 1f;
 
 	void Start () 
 	{
@@ -76,7 +77,7 @@ public class SpriteObjectTracker : MonoBehaviour {
 					float interval = minRange - fullSizeRange;
 					scale = 1f - t/interval;
 				}
-				this.SetScale(scale);
+				this.SetScale(scale*scaleMultiplier);
 			}
 		}
 
